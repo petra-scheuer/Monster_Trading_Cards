@@ -1,3 +1,4 @@
+// Router.cs
 using System;
 
 namespace MonsterCardTradingGame
@@ -10,7 +11,11 @@ namespace MonsterCardTradingGame
             {
                 return UsersController.Handle(request);
             }
-            // ggf. weitere Controller
+            else if (request.Path.StartsWith("/sessions"))
+            {
+                return SessionsController.Handle(request);
+            }
+            // Weitere Controller können hier hinzugefügt werden
             else
             {
                 return new HttpResponse

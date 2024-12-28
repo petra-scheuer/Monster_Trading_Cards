@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:latest
+    container_name: mtcg-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mtcg
+    ports:
+      - "5433:5432"  # Host-Port 5433 -> Container-Port 5432
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: monstercardtradinggame
+    restart: always
+    ports:
+      - "10091:10091"  # Mappe den benötigten Port für deine Anwendung
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+volumes:
+  dbdata:

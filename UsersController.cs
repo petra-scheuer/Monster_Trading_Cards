@@ -6,9 +6,6 @@ namespace MonsterCardTradingGame
 {
     public static class UsersController
     {
-        // Temporärer In-Memory-Speicher für unsere User (später: DB!)
-        private static Dictionary<string, string> _users = new Dictionary<string, string>();
-
         public static HttpResponse Handle(HttpRequest request)
         {
             // Aufteilen nach (Methode, Pfad usw.).
@@ -39,7 +36,7 @@ namespace MonsterCardTradingGame
             try
             {
                 var userDto = JsonSerializer.Deserialize<RegisterUserDto>(request.Body);
-                if (userDto == null || string.IsNullOrWhiteSpace(userDto.Username))
+                if (userDto == null || string.IsNullOrWhiteSpace(userDto.Username) || string.IsNullOrWhiteSpace(userDto.Password))
                 {
                     return new HttpResponse
                     {
@@ -49,8 +46,8 @@ namespace MonsterCardTradingGame
                     };
                 }
 
-                // 2) Prüfen, ob User schon existiert
-                if (_users.ContainsKey(userDto.Username))
+                // 2) Prüfen, ob User schon existiert mittels UserRepository
+                if (UserRepository.GetUser(userDto.Username) != null)
                 {
                     return new HttpResponse
                     {
@@ -60,16 +57,27 @@ namespace MonsterCardTradingGame
                     };
                 }
 
-                // 3) User eintragen (hier nur in unser Dictionary)
-                _users[userDto.Username] = userDto.Password;
+                // 3) User eintragen in die Datenbank
+                bool created = UserRepository.CreateUser(userDto.Username, userDto.Password);
 
-                // Erfolg
-                return new HttpResponse
+                if (created)
                 {
-                    StatusCode = 201,
-                    ContentType = "text/plain",
-                    Body = $"User {userDto.Username} created."
-                };
+                    return new HttpResponse
+                    {
+                        StatusCode = 201,
+                        ContentType = "text/plain",
+                        Body = $"User {userDto.Username} created."
+                    };
+                }
+                else
+                {
+                    return new HttpResponse
+                    {
+                        StatusCode = 500,
+                        ContentType = "text/plain",
+                        Body = "Internal Server Error while creating user."
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -85,9 +93,9 @@ namespace MonsterCardTradingGame
 
         private static HttpResponse ListUsers()
         {
-            // Einfaches Auflisten aller Nutzernamen
-            // Nicht sehr datenschutzfreundlich, aber als Demo OK ;-)
-            var allUsers = string.Join(", ", _users.Keys);
+            // Holt alle Benutzernamen aus der Datenbank
+            var usernames = UserRepository.GetAllUsernames();
+            var allUsers = string.Join(", ", usernames);
 
             return new HttpResponse
             {

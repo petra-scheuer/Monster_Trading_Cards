@@ -1,6 +1,0 @@
-﻿services:
-  monstercardtradinggame:
-    image: monstercardtradinggame
-    build:
-      context: .
-      dockerfile: Dockerfile

@@ -7,6 +7,15 @@ namespace MonsterCardTradingGame
     {
         static void Main(string[] args)
         {
+            // Datenbank einrichten
+            DatabaseManager.SetupTables();
+
+            // Verbindung testen
+            bool dbOk = DatabaseManager.TestConnection();
+            if (dbOk)
+                Console.WriteLine("[DB] Connection is OK!");
+            else
+                Console.WriteLine("[DB] Could not connect to DB!");
             // Port festlegen
             int port = 10001;
 

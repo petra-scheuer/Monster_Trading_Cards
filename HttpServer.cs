@@ -1,3 +1,4 @@
+// HttpServer.cs
 using System;
 using System.IO;
 using System.Net;
@@ -10,7 +11,7 @@ namespace MonsterCardTradingGame
     public class HttpServer
     {
         private readonly int _port;
-        private TcpListener _listener;
+        private TcpListener _listener = null!;
         private bool _isRunning;
 
         public HttpServer(int port)
@@ -51,7 +52,8 @@ namespace MonsterCardTradingGame
         public void Stop()
         {
             _isRunning = false;
-            _listener?.Stop();
+            _listener.Stop();
+            Console.WriteLine("[HttpServer] Server stopped.");
         }
 
         private void HandleClient(object clientObj)
@@ -65,18 +67,19 @@ namespace MonsterCardTradingGame
                 var request = HttpRequestParser.ParseFromStream(stream);
                 Console.WriteLine($"[HttpServer] Request => Method: {request.Method}, Path: {request.Path}");
 
-                // Statt Dummy-Antwort: Router aufrufen
+                // Router aufrufen
                 var response = Router.Route(request);
 
                 // Antwort in den Stream schreiben
-                response.WriteToStream(stream);
+                var responseBytes = response.GetBytes();
+                stream.Write(responseBytes, 0, responseBytes.Length);
+                Console.WriteLine($"[HttpServer] Response sent with StatusCode: {response.StatusCode}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[HttpServer] Error parsing HTTP: {ex.Message}");
 
                 // Fehler-Antwort: Hier sehr minimal gehalten
-                // Achte darauf, CRLF statt nur LF zu verwenden:
                 using var writer = new StreamWriter(stream)
                 {
                     NewLine = "\r\n"  // erzwingt CRLF bei WriteLine
