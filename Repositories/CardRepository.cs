@@ -71,6 +71,34 @@ namespace MonsterCardTradingGame
             return true;
         }
 
-        // Additional methods (e.g., UpdateCard) can be implemented here
+        public static List<Card> GetAllCards()
+        {
+            const string sql = @"SELECT id, name, type, damage, element FROM cards";
+            return DatabaseManager.ExecuteReader<Card>(sql, reader =>
+            {
+                return reader.GetString(2).ToLower() switch
+                {
+                    "spell" => new SpellCard
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        Type = reader.GetString(2),
+                        Damage = reader.GetInt32(3),
+                        Element = reader.GetString(4)
+                    },
+                    "monster" => new MonsterCard
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        Type = reader.GetString(2),
+                        Damage = reader.GetInt32(3),
+                        Element = reader.GetString(4)
+                    },
+                    _ => throw new Exception("Unknown card type.")
+                };
+            });
+        }
+
+        
     }
 }

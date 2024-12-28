@@ -19,6 +19,10 @@ namespace MonsterCardTradingGame
             {
                 return CardsController.Handle(request);
             }
+            else if (request.Path.StartsWith("/packages"))
+            {
+                return PackagesController.Handle(request);
+            }
             // Weitere Controller können hier hinzugefügt werden
             else
             {

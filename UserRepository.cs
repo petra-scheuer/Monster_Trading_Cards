@@ -145,6 +145,21 @@ namespace MonsterCardTradingGame
             // Placeholder:
             return hashedPassword == Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
         }
+        public static bool EnsureSystemUserExists()
+        {
+            var systemUser = GetUser("system");
+            if (systemUser != null)
+            {
+                return true; // Benutzer existiert bereits
+            }
+
+            // Erstelle den "system" Benutzer mit einem sicheren Passwort
+            // Du kannst ein starkes Passwort oder ein zufällig generiertes Token verwenden
+            string systemPassword = "systempassword"; // Ändere dies zu einem sicheren Wert
+
+            return CreateUser("system", systemPassword);
+        }
+
     }
 
     /// <summary>
@@ -158,4 +173,5 @@ namespace MonsterCardTradingGame
         public int Coins { get; set; }
         public int ELO { get; set; }
     }
+    
 }

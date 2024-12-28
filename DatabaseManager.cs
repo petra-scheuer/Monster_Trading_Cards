@@ -42,35 +42,93 @@ namespace MonsterCardTradingGame
         /// Hier könntest du deine Tabellen anlegen. 
         /// Du kannst diese Methode z.B. beim Programmstart einmal aufrufen.
         /// </summary>
+        ///
         public static void SetupTables()
-        {
-            // Beispiel: eine users-Tabelle
-            const string createUsersTable = @"
-                CREATE TABLE IF NOT EXISTS users (
-                    username VARCHAR(50) PRIMARY KEY,
-                    password VARCHAR(50) NOT NULL,
-                    token VARCHAR(255),
-                    coins INT NOT NULL DEFAULT 20,
-                    elo INT NOT NULL DEFAULT 100
-                );
-            ";
+{
+    // Bestehende Tabellen erstellen
+    const string createUsersTable = @"
+        CREATE TABLE IF NOT EXISTS users (
+            username VARCHAR(50) PRIMARY KEY,
+            password VARCHAR(255) NOT NULL, -- Passe die Länge und Typ an, falls nötig
+            token VARCHAR(255),
+            coins INT NOT NULL DEFAULT 20,
+            elo INT NOT NULL DEFAULT 100
+        );
+    ";
 
-            ExecuteNonQuery(createUsersTable);
+    ExecuteNonQuery(createUsersTable);
 
-            // New cards table creation
-            const string createCardsTable = @"
-                CREATE TABLE IF NOT EXISTS cards (
-                    id SERIAL PRIMARY KEY,
-                    name VARCHAR(100) NOT NULL,
-                    type VARCHAR(20) NOT NULL, -- 'spell' or 'monster'
-                    damage INT NOT NULL,
-                    element VARCHAR(20) NOT NULL, -- 'fire', 'water', 'normal'
-                    owner VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE
-                );
-            ";
+    const string createCardsTable = @"
+        CREATE TABLE IF NOT EXISTS cards (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            type VARCHAR(20) NOT NULL, -- 'spell' oder 'monster'
+            damage INT NOT NULL,
+            element VARCHAR(20) NOT NULL, -- 'fire', 'water', 'normal'
+            owner_username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE
+        );
+    ";
 
-            ExecuteNonQuery(createCardsTable);
-            }
+    ExecuteNonQuery(createCardsTable);
+
+    // Tabelle für Pakete (falls implementiert)
+    const string createPackagesTable = @"
+        CREATE TABLE IF NOT EXISTS packages (
+            id SERIAL PRIMARY KEY,
+            card1_id INT REFERENCES cards(id) ON DELETE CASCADE,
+            card2_id INT REFERENCES cards(id) ON DELETE CASCADE,
+            card3_id INT REFERENCES cards(id) ON DELETE CASCADE,
+            card4_id INT REFERENCES cards(id) ON DELETE CASCADE,
+            card5_id INT REFERENCES cards(id) ON DELETE CASCADE,
+            owner_username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE
+        );
+    ";
+
+    ExecuteNonQuery(createPackagesTable);
+
+    // Tabelle für Decks (falls implementiert)
+    const string createDecksTable = @"
+        CREATE TABLE IF NOT EXISTS decks (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE,
+            card1_id INT REFERENCES cards(id) ON DELETE CASCADE,
+            card2_id INT REFERENCES cards(id) ON DELETE CASCADE,
+            card3_id INT REFERENCES cards(id) ON DELETE CASCADE,
+            card4_id INT REFERENCES cards(id) ON DELETE CASCADE
+        );
+    ";
+
+    ExecuteNonQuery(createDecksTable);
+
+    // Tabelle für Battles (falls implementiert)
+    const string createBattlesTable = @"
+        CREATE TABLE IF NOT EXISTS battles (
+            id SERIAL PRIMARY KEY,
+            player1_username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE,
+            player2_username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE,
+            battle_log TEXT,
+            winner_username VARCHAR(50) REFERENCES users(username),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    ";
+
+    ExecuteNonQuery(createBattlesTable);
+
+    // **Stelle sicher, dass der "system" Benutzer existiert**
+    bool systemUserCreated = UserRepository.EnsureSystemUserExists();
+    if (systemUserCreated)
+    {
+        Console.WriteLine("[DB] 'system' Benutzer existiert oder wurde erstellt.");
+    }
+    else
+    {
+        Console.WriteLine("[DB] Fehler beim Erstellen des 'system' Benutzers.");
+    }
+
+    // Seed-Karten hinzufügen
+    SeedCards();
+}
+
 
         /// <summary>
         /// Führt ein beliebiges SQL-Statement aus, das 
@@ -149,5 +207,27 @@ namespace MonsterCardTradingGame
 
             return result;
         }
+        public static void SeedCards()
+        {
+            // Beispielkarten
+            var cards = new List<Card>
+            {
+                new SpellCard { Name = "Fireball", Type = "spell", Damage = 50, Element = "fire" },
+                new SpellCard { Name = "WaterBlast", Type = "spell", Damage = 60, Element = "water" },
+                new SpellCard { Name = "NormalStrike", Type = "spell", Damage = 30, Element = "normal" },
+                new MonsterCard { Name = "EarthGiant", Type = "monster", Damage = 70, Element = "normal" },
+                new MonsterCard { Name = "WaterGoblin", Type = "monster", Damage = 40, Element = "water" },
+                new MonsterCard { Name = "FireDragon", Type = "monster", Damage = 80, Element = "fire" },
+                new MonsterCard { Name = "NormalOrc", Type = "monster", Damage = 35, Element = "normal" },
+                // Füge weitere Karten nach Bedarf hinzu
+            };
+
+            foreach (var card in cards)
+            {
+                // Hier fügst du die Karten einem speziellen Benutzer hinzu, z.B. "system"
+                CardRepository.AddCard("system", card);
+            }
+        }
+
     }
 }
