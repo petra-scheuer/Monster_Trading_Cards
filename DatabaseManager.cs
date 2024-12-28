@@ -57,10 +57,20 @@ namespace MonsterCardTradingGame
 
             ExecuteNonQuery(createUsersTable);
 
-            // Du könntest hier weitere CREATE TABLE-Befehle anfügen (z.B. für cards, packages, trades ...)
-            // const string createCardsTable = ...
-            // ExecuteNonQuery(createCardsTable);
-        }
+            // New cards table creation
+            const string createCardsTable = @"
+                CREATE TABLE IF NOT EXISTS cards (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL,
+                    type VARCHAR(20) NOT NULL, -- 'spell' or 'monster'
+                    damage INT NOT NULL,
+                    element VARCHAR(20) NOT NULL, -- 'fire', 'water', 'normal'
+                    owner VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE
+                );
+            ";
+
+            ExecuteNonQuery(createCardsTable);
+            }
 
         /// <summary>
         /// Führt ein beliebiges SQL-Statement aus, das 
