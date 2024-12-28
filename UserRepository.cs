@@ -1,3 +1,4 @@
+// UserRepository.cs
 using System;
 using Npgsql;
 using System.Collections.Generic;
@@ -23,10 +24,13 @@ namespace MonsterCardTradingGame
                 return false;
             }
 
+            // Passwort-Hashing (Wichtig für Sicherheit!)
+            string hashedPassword = HashPassword(password);
+
             // Benutzer anlegen
             const string sql = @"INSERT INTO users (username, password, token, coins, elo)
                                  VALUES (@u, @p, '', 20, 100)";
-            DatabaseManager.ExecuteNonQuery(sql, ("u", username), ("p", password));
+            DatabaseManager.ExecuteNonQuery(sql, ("u", username), ("p", hashedPassword));
             return true;
         }
 
@@ -91,7 +95,7 @@ namespace MonsterCardTradingGame
         public static bool ValidateCredentials(string username, string password)
         {
             var user = GetUser(username);
-            return user != null && user.Password == password;
+            return user != null && VerifyPassword(password, user.Password);
         }
 
         /// <summary>
@@ -103,6 +107,44 @@ namespace MonsterCardTradingGame
             const string sql = @"SELECT username FROM users";
             return DatabaseManager.ExecuteReader(sql, reader => reader.GetString(0));
         }
+
+        /// <summary>
+        /// Holt den Benutzernamen anhand des Tokens.
+        /// </summary>
+        /// <param name="token">Das Authentifizierungstoken.</param>
+        /// <returns>Der Benutzername oder null, wenn das Token ungültig ist.</returns>
+        public static string? GetUsernameByToken(string token)
+        {
+            const string sql = @"SELECT username FROM users WHERE token = @t";
+            var result = DatabaseManager.ExecuteReader(sql, reader => reader.GetString(0), ("t", token));
+            return result.Count > 0 ? result[0] : null;
+        }
+
+        /// <summary>
+        /// Hashes the password using a secure algorithm.
+        /// (Implementiere eine sichere Hash-Funktion hier, z.B. bcrypt)
+        /// </summary>
+        /// <param name="password">Das zu hashende Passwort.</param>
+        /// <returns>Der gehashte Passwort-String.</returns>
+        private static string HashPassword(string password)
+        {
+            // Implementiere hier ein sicheres Hashing, z.B. mit BCrypt
+            // Placeholder:
+            return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
+        }
+
+        /// <summary>
+        /// Verifiziert das Passwort gegen den gehashten Wert.
+        /// </summary>
+        /// <param name="password">Das eingegebene Passwort.</param>
+        /// <param name="hashedPassword">Das gespeicherte gehashte Passwort.</param>
+        /// <returns>True, wenn das Passwort übereinstimmt; sonst False.</returns>
+        private static bool VerifyPassword(string password, string hashedPassword)
+        {
+            // Implementiere hier die Passwort-Verifizierung entsprechend dem Hashing-Algorithmus
+            // Placeholder:
+            return hashedPassword == Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
+        }
     }
 
     /// <summary>
@@ -111,7 +153,7 @@ namespace MonsterCardTradingGame
     public class UserData
     {
         public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty; // Gespeichertes gehashtes Passwort
         public string Token { get; set; } = string.Empty;
         public int Coins { get; set; }
         public int ELO { get; set; }

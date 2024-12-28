@@ -22,7 +22,7 @@ namespace MonsterCardTradingGame
                 {
                     StatusCode = 404,
                     ContentType = "text/plain",
-                    Body = "Not Found"
+                    Body = "Nicht gefunden"
                 };
             }
         }

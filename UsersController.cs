@@ -1,5 +1,6 @@
+// UsersController.cs
 using System;
-using System.Text.Json;  // Für JSON-Parsing, falls nötig
+using System.Text.Json;
 using System.Collections.Generic;
 
 namespace MonsterCardTradingGame
@@ -8,15 +9,37 @@ namespace MonsterCardTradingGame
     {
         public static HttpResponse Handle(HttpRequest request)
         {
-            // Aufteilen nach (Methode, Pfad usw.).
-            // Beispiel: POST /users -> User registrieren.
             if (request.Method == "POST" && request.Path == "/users")
             {
                 return RegisterUser(request);
             }
-            // GET /users -> Liste aller User ausgeben (nur Demo!)
             else if (request.Method == "GET" && request.Path == "/users")
             {
+                // Überprüfen der Authentifizierung
+                var authHeader = request.Authorization;
+                if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
+                {
+                    return new HttpResponse
+                    {
+                        StatusCode = 401,
+                        ContentType = "text/plain",
+                        Body = "Unauthorized: Kein gültiges Token"
+                    };
+                }
+
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+                var username = GetUsernameByToken(token);
+                if (username == null)
+                {
+                    return new HttpResponse
+                    {
+                        StatusCode = 401,
+                        ContentType = "text/plain",
+                        Body = "Unauthorized: Ungültiges Token"
+                    };
+                }
+
+                // Token ist gültig, Benutzer ist authentifiziert
                 return ListUsers();
             }
 
@@ -31,8 +54,6 @@ namespace MonsterCardTradingGame
 
         private static HttpResponse RegisterUser(HttpRequest request)
         {
-            // 1) Body auslesen und als JSON interpretieren
-            // Beispiel erwartet: {"Username":"alice","Password":"secret"}
             try
             {
                 var userDto = JsonSerializer.Deserialize<RegisterUserDto>(request.Body);
@@ -42,22 +63,20 @@ namespace MonsterCardTradingGame
                     {
                         StatusCode = 400,
                         ContentType = "text/plain",
-                        Body = "Invalid user data"
+                        Body = "Ungültige Benutzerdaten"
                     };
                 }
 
-                // 2) Prüfen, ob User schon existiert mittels UserRepository
                 if (UserRepository.GetUser(userDto.Username) != null)
                 {
                     return new HttpResponse
                     {
                         StatusCode = 409,
                         ContentType = "text/plain",
-                        Body = "User already exists"
+                        Body = "Benutzer existiert bereits"
                     };
                 }
 
-                // 3) User eintragen in die Datenbank
                 bool created = UserRepository.CreateUser(userDto.Username, userDto.Password);
 
                 if (created)
@@ -66,7 +85,7 @@ namespace MonsterCardTradingGame
                     {
                         StatusCode = 201,
                         ContentType = "text/plain",
-                        Body = $"User {userDto.Username} created."
+                        Body = $"Benutzer {userDto.Username} erstellt."
                     };
                 }
                 else
@@ -75,25 +94,23 @@ namespace MonsterCardTradingGame
                     {
                         StatusCode = 500,
                         ContentType = "text/plain",
-                        Body = "Internal Server Error while creating user."
+                        Body = "Interner Serverfehler beim Erstellen des Benutzers."
                     };
                 }
             }
             catch (Exception ex)
             {
-                // Body war evtl. kein gültiges JSON
                 return new HttpResponse
                 {
                     StatusCode = 400,
                     ContentType = "text/plain",
-                    Body = $"Could not parse user data: {ex.Message}"
+                    Body = $"Fehler beim Verarbeiten der Benutzerdaten: {ex.Message}"
                 };
             }
         }
 
         private static HttpResponse ListUsers()
         {
-            // Holt alle Benutzernamen aus der Datenbank
             var usernames = UserRepository.GetAllUsernames();
             var allUsers = string.Join(", ", usernames);
 
@@ -101,15 +118,21 @@ namespace MonsterCardTradingGame
             {
                 StatusCode = 200,
                 ContentType = "text/plain",
-                Body = $"Registered Users: {allUsers}"
+                Body = $"Registrierte Benutzer: {allUsers}"
             };
+        }
+
+        private static string? GetUsernameByToken(string token)
+        {
+            // Optimierte Methode: Direkte Datenbankabfrage nach Token
+            return UserRepository.GetUsernameByToken(token);
         }
     }
 
-    // Damit wir was zum Deserialisieren haben:
+    // DTO für die Registrierung
     public class RegisterUserDto
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }
