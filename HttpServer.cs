@@ -56,34 +56,43 @@ namespace MonsterCardTradingGame
 
         private void HandleClient(object clientObj)
         {
-            // Wir wandeln das object in einen TcpClient um
             using var client = (TcpClient)clientObj;
             using var stream = client.GetStream();
 
             try
             {
-                // 1) Versuchen, einen HttpRequest zu parsen
+                // Request parsen
                 var request = HttpRequestParser.ParseFromStream(stream);
                 Console.WriteLine($"[HttpServer] Request => Method: {request.Method}, Path: {request.Path}");
 
-                // 2) Dummy-Antwort erstellen
-                using var writer = new StreamWriter(stream);
-                writer.WriteLine("HTTP/1.1 200 OK");
-                writer.WriteLine("Content-Type: text/plain");
-                writer.WriteLine();
-                writer.WriteLine($"Parsed request with Method={request.Method}, Path={request.Path}, " +
-                                 $"BodyLength={request.Body.Length}, Auth={request.Authorization}");
+                // Statt Dummy-Antwort: Router aufrufen
+                var response = Router.Route(request);
+
+                // Antwort in den Stream schreiben
+                response.WriteToStream(stream);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[HttpServer] Error parsing HTTP: {ex.Message}");
 
-                // 3) Fehler-Antwort zurücksenden
-                using var writer = new StreamWriter(stream);
+                // Fehler-Antwort: Hier sehr minimal gehalten
+                // Achte darauf, CRLF statt nur LF zu verwenden:
+                using var writer = new StreamWriter(stream)
+                {
+                    NewLine = "\r\n"  // erzwingt CRLF bei WriteLine
+                };
+
+                // Statuszeile
                 writer.WriteLine("HTTP/1.1 400 Bad Request");
+                // Header
                 writer.WriteLine("Content-Type: text/plain");
+                // Ende der Header
                 writer.WriteLine();
+
+                // Body
                 writer.WriteLine($"Error: {ex.Message}");
+
+                writer.Flush();
             }
         }
     }
