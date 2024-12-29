@@ -3,7 +3,7 @@ using System;
 using Npgsql;
 using System.Collections.Generic;
 
-namespace MonsterCardTradingGame
+namespace MonsterCardTradingGame.Repositories
 {
     /// <summary>
     /// Stellt Methoden für den Datenbankzugriff bezüglich Benutzer bereit.

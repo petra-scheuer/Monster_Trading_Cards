@@ -3,8 +3,10 @@
 using System;
 using System.Text.Json;
 using System.Collections.Generic;
+using MonsterCardTradingGame.Repositories;
 
-namespace MonsterCardTradingGame
+
+namespace MonsterCardTradingGame.Controllers
 {
     public static class CardsController
     {

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using MonsterCardTradingGame.Models;
 
-namespace MonsterCardTradingGame
+namespace MonsterCardTradingGame.Repositories
 {
     public static class PackageRepository
     {

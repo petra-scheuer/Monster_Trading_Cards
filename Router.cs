@@ -1,5 +1,7 @@
 // Router.cs
 using System;
+using MonsterCardTradingGame.Controllers; // Füge diese Zeile hinzu
+
 
 namespace MonsterCardTradingGame
 {
@@ -22,6 +24,10 @@ namespace MonsterCardTradingGame
             else if (request.Path.StartsWith("/packages"))
             {
                 return PackagesController.Handle(request);
+            }
+            else if (request.Path.StartsWith("/decks"))
+            {
+                return DecksController.Handle(request);
             }
             // Weitere Controller können hier hinzugefügt werden
             else

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using MonsterCardTradingGame.Models; // Stelle sicher, dass du den korrekten Namespace verwendest
 
-namespace MonsterCardTradingGame
+namespace MonsterCardTradingGame.Repositories
 {
     public static class CardRepository
     {

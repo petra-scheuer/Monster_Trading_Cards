@@ -1,8 +1,9 @@
 // SessionsController.cs
 using System;
 using System.Text.Json;
+using MonsterCardTradingGame.Repositories;
 
-namespace MonsterCardTradingGame
+namespace MonsterCardTradingGame.Controllers
 {
     public static class SessionsController
     {

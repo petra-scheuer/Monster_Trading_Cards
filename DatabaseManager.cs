@@ -1,6 +1,8 @@
 using System;
 using Npgsql;
 using System.Data;
+using MonsterCardTradingGame.Repositories;
+
 
 namespace MonsterCardTradingGame
 {
@@ -49,7 +51,7 @@ namespace MonsterCardTradingGame
     const string createUsersTable = @"
         CREATE TABLE IF NOT EXISTS users (
             username VARCHAR(50) PRIMARY KEY,
-            password VARCHAR(255) NOT NULL, -- Passe die Länge und Typ an, falls nötig
+            password VARCHAR(255) NOT NULL,
             token VARCHAR(255),
             coins INT NOT NULL DEFAULT 20,
             elo INT NOT NULL DEFAULT 100
@@ -86,7 +88,7 @@ namespace MonsterCardTradingGame
 
     ExecuteNonQuery(createPackagesTable);
 
-    // Tabelle für Decks (falls implementiert)
+    // Neue Tabelle für Decks
     const string createDecksTable = @"
         CREATE TABLE IF NOT EXISTS decks (
             id SERIAL PRIMARY KEY,
@@ -128,6 +130,7 @@ namespace MonsterCardTradingGame
     // Seed-Karten hinzufügen
     SeedCards();
 }
+
 
 
         /// <summary>
