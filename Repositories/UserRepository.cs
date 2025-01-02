@@ -186,6 +186,21 @@ namespace MonsterCardTradingGame.Repositories
                 };
             });
         }
+        public static bool UpdatePassword(string username, string newPassword)
+        {
+            try
+            {
+                string hashedPassword = HashPassword(newPassword); // Implementiere eine sichere Hash-Funktion
+                const string sql = @"UPDATE users SET password = @p WHERE username = @u";
+                DatabaseManager.ExecuteNonQuery(sql, ("p", hashedPassword), ("u", username));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Optional: Logge den Fehler
+                return false;
+            }
+        }
 
     }
 
