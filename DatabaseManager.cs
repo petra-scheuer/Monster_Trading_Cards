@@ -1,3 +1,5 @@
+//DatabaseManager.cs
+
 using System;
 using Npgsql;
 using System.Data;
@@ -92,7 +94,7 @@ namespace MonsterCardTradingGame
     const string createDecksTable = @"
         CREATE TABLE IF NOT EXISTS decks (
             id SERIAL PRIMARY KEY,
-            username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE,
+            owner_username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE,
             card1_id INT REFERENCES cards(id) ON DELETE CASCADE,
             card2_id INT REFERENCES cards(id) ON DELETE CASCADE,
             card3_id INT REFERENCES cards(id) ON DELETE CASCADE,

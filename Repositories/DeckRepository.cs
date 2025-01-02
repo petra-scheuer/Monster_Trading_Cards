@@ -1,3 +1,5 @@
+//DeckRepository.cs
+
 using System;
 using System.Collections.Generic;
 using MonsterCardTradingGame.Models;
@@ -30,11 +32,11 @@ namespace MonsterCardTradingGame.Repositories
             }
 
             // Löschen vorhandener Decks des Benutzers
-            const string deleteSql = @"DELETE FROM decks WHERE username = @u";
+            const string deleteSql = @"DELETE FROM decks WHERE owner_username = @u";
             DatabaseManager.ExecuteNonQuery(deleteSql, ("u", username));
 
             // Einfügen des neuen Decks
-            const string insertSql = @"INSERT INTO decks (username, card1_id, card2_id, card3_id, card4_id)
+            const string insertSql = @"INSERT INTO decks (owner_username, card1_id, card2_id, card3_id, card4_id)
                                        VALUES (@u, @c1, @c2, @c3, @c4)";
             DatabaseManager.ExecuteNonQuery(insertSql,
                 ("u", username),
@@ -55,7 +57,7 @@ namespace MonsterCardTradingGame.Repositories
         {
             const string sql = @"SELECT id, card1_id, card2_id, card3_id, card4_id
                                  FROM decks
-                                 WHERE username = @u";
+                                 WHERE owner_username = @u";
 
             var result = DatabaseManager.ExecuteReader(sql, reader =>
             {

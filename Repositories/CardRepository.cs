@@ -99,6 +99,49 @@ namespace MonsterCardTradingGame.Repositories
             });
         }
 
-        
+        // Repositories/CardRepository.cs
+        public static List<Card> GetCardsByIds(List<int> cardIds)
+        {
+            if (cardIds == null || cardIds.Count == 0)
+                return new List<Card>();
+
+            // Erstelle einen Parameter-String für IN-Clause
+            var parameters = new List<string>();
+            var sqlParams = new List<(string paramName, object paramValue)>();
+            for (int i = 0; i < cardIds.Count; i++)
+            {
+                string param = $"@id{i}";
+                parameters.Add(param);
+                sqlParams.Add((param, cardIds[i]));
+            }
+
+            string inClause = string.Join(", ", parameters);
+            string sql = $"SELECT id, name, type, damage, element FROM cards WHERE id IN ({inClause})";
+
+            return DatabaseManager.ExecuteReader<Card>(sql, reader =>
+            {
+                return reader.GetString(2).ToLower() switch
+                {
+                    "spell" => new SpellCard
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        Type = reader.GetString(2),
+                        Damage = reader.GetInt32(3),
+                        Element = reader.GetString(4)
+                    },
+                    "monster" => new MonsterCard
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        Type = reader.GetString(2),
+                        Damage = reader.GetInt32(3),
+                        Element = reader.GetString(4)
+                    },
+                    _ => throw new Exception("Unknown card type.")
+                };
+            }, sqlParams.ToArray());
+        }
+
     }
 }

@@ -159,6 +159,33 @@ namespace MonsterCardTradingGame.Repositories
 
             return CreateUser("system", systemPassword);
         }
+        
+        public static bool UpdateELO(string username, int eloChange)
+        {
+            const string sql = @"UPDATE users SET elo = elo + @change WHERE username = @u";
+            DatabaseManager.ExecuteNonQuery(sql, ("change", eloChange), ("u", username));
+            return true;
+        }
+
+        // Repositories/UserRepository.cs
+
+        public static List<UserData> GetAllUsersOrderedByELO()
+        {
+            const string sql = @"SELECT username, password, token, coins, elo 
+                         FROM users
+                         ORDER BY elo DESC";
+            return DatabaseManager.ExecuteReader<UserData>(sql, reader =>
+            {
+                return new UserData
+                {
+                    Username = reader.GetString(0),
+                    Password = reader.GetString(1),
+                    Token = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                    Coins = reader.GetInt32(3),
+                    ELO = reader.GetInt32(4)
+                };
+            });
+        }
 
     }
 

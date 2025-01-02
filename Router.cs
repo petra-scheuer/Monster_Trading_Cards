@@ -5,6 +5,7 @@ using MonsterCardTradingGame.Controllers; // Füge diese Zeile hinzu
 
 namespace MonsterCardTradingGame
 {
+    // Router.cs
     public static class Router
     {
         public static HttpResponse Route(HttpRequest request)
@@ -29,6 +30,14 @@ namespace MonsterCardTradingGame
             {
                 return DecksController.Handle(request);
             }
+            else if (request.Path.StartsWith("/battles"))
+            {
+                return BattlesController.Handle(request);
+            }
+            else if (request.Path.StartsWith("/scoreboard"))
+            {
+                return ScoreboardController.Handle(request);
+            }
             // Weitere Controller können hier hinzugefügt werden
             else
             {
@@ -41,4 +50,7 @@ namespace MonsterCardTradingGame
             }
         }
     }
+
+    
+    
 }
