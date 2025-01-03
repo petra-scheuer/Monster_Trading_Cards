@@ -117,6 +117,21 @@ namespace MonsterCardTradingGame
     ";
 
     ExecuteNonQuery(createBattlesTable);
+    // Tabelle für Trades
+    const string createTradesTable = @"
+        CREATE TABLE IF NOT EXISTS trades (
+            id SERIAL PRIMARY KEY,
+            offered_by_username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE,
+            offered_card_id INT REFERENCES cards(id) ON DELETE CASCADE,
+            requirement_type VARCHAR(20) NOT NULL, -- 'spell' oder 'monster'
+            requirement_element VARCHAR(20),       -- Optional: 'fire', 'water', 'normal'
+            requirement_min_damage INT,             -- Optional: Mindestschaden
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    ";
+
+    ExecuteNonQuery(createTradesTable);
 
     // **Stelle sicher, dass der "system" Benutzer existiert**
     bool systemUserCreated = UserRepository.EnsureSystemUserExists();

@@ -172,5 +172,14 @@ namespace MonsterCardTradingGame.Repositories
 
             return cards.FirstOrDefault();
         }
+        
+// Füge diese Methode zu CardRepository hinzu
+        public static bool TransferCardOwnership(int cardId, string newOwnerUsername)
+        {
+            const string sql = @"UPDATE cards SET owner_username = @newOwner WHERE id = @id";
+            DatabaseManager.ExecuteNonQuery(sql, ("newOwner", newOwnerUsername), ("id", cardId));
+            return true;
+        }
+
     }
 }

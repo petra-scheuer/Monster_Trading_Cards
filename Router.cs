@@ -38,6 +38,10 @@ namespace MonsterCardTradingGame
             {
                 return ScoreboardController.Handle(request);
             }
+            else if (request.Path.StartsWith("/trades"))
+            {
+                return TradesController.Handle(request);
+            }
             // Weitere Controller können hier hinzugefügt werden
             else
             {

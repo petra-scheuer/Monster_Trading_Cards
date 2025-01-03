@@ -1,4 +1,3 @@
-// Models/Trade.cs
 using System;
 
 namespace MonsterCardTradingGame.Models
@@ -9,9 +8,9 @@ namespace MonsterCardTradingGame.Models
         public string OfferedByUsername { get; set; } = string.Empty;
         public int OfferedCardId { get; set; }
         public string RequirementType { get; set; } = string.Empty; // 'spell' oder 'monster'
-        public string? RequirementElement { get; set; } // Optional: z.B. 'fire'
+        public string? RequirementElement { get; set; } // Optional: 'fire', 'water', 'normal'
         public int? RequirementMinDamage { get; set; } // Optional: Mindestschaden
         public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
     }
 }
