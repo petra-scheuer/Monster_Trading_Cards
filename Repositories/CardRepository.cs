@@ -143,5 +143,34 @@ namespace MonsterCardTradingGame.Repositories
             }, sqlParams.ToArray());
         }
 
+        public static Card? GetCardById(int cardId)
+        {
+            const string sql = @"SELECT id, name, type, damage, element FROM cards WHERE id = @id";
+            var cards = DatabaseManager.ExecuteReader<Card>(sql, reader =>
+            {
+                return reader.GetString(2).ToLower() switch
+                {
+                    "spell" => new SpellCard
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        Type = reader.GetString(2),
+                        Damage = reader.GetInt32(3),
+                        Element = reader.GetString(4)
+                    },
+                    "monster" => new MonsterCard
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        Type = reader.GetString(2),
+                        Damage = reader.GetInt32(3),
+                        Element = reader.GetString(4)
+                    },
+                    _ => throw new Exception("Unknown card type.")
+                };
+            }, ("id", cardId));
+
+            return cards.FirstOrDefault();
+        }
     }
 }

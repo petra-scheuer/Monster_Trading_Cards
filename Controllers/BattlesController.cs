@@ -1,31 +1,32 @@
 // Controllers/BattlesController.cs
 using System;
 using System.Text.Json;
-using MonsterCardTradingGame.Repositories;
 using MonsterCardTradingGame.Models;
+using MonsterCardTradingGame.Repositories;
 using MonsterCardTradingGame.Logic;
 
 namespace MonsterCardTradingGame.Controllers
 {
     public static class BattlesController
     {
+        private static BattleLogic battleLogic = new BattleLogic();
+
         public static HttpResponse Handle(HttpRequest request)
         {
-            if (!IsAuthenticated(request, out string? username))
-            {
-                return new HttpResponse
-                {
-                    StatusCode = 401,
-                    ContentType = "text/plain",
-                    Body = "Unauthorized: Invalid or missing token."
-                };
-            }
-
             if (request.Method == "POST" && request.Path == "/battles")
             {
-                return InitiateBattle(username!, request);
+                return StartBattle(request);
+            }
+            else if (request.Method == "POST" && request.Path.StartsWith("/battles/") && request.Path.EndsWith("/turn"))
+            {
+                return PerformBattleTurn(request);
+            }
+            else if (request.Method == "GET" && request.Path.StartsWith("/battles/"))
+            {
+                return GetBattleStatus(request);
             }
 
+            // Falls nichts passt, 400 Bad Request
             return new HttpResponse
             {
                 StatusCode = 400,
@@ -34,90 +35,52 @@ namespace MonsterCardTradingGame.Controllers
             };
         }
 
-        private static HttpResponse InitiateBattle(string username, HttpRequest request)
+        private static HttpResponse StartBattle(HttpRequest request)
         {
             try
             {
-                var battleDto = JsonSerializer.Deserialize<BattleRequestDto>(request.Body);
-                if (battleDto == null || string.IsNullOrWhiteSpace(battleDto.OpponentUsername))
+                var battleDto = JsonSerializer.Deserialize<StartBattleDto>(request.Body);
+                if (battleDto == null || string.IsNullOrWhiteSpace(battleDto.Username) || battleDto.CardIds == null || battleDto.CardIds.Count != 4)
                 {
                     return new HttpResponse
                     {
                         StatusCode = 400,
                         ContentType = "text/plain",
-                        Body = "Invalid battle request data."
+                        Body = "Ungültige Battle-Daten. Bitte stelle sicher, dass Username und genau 4 CardIds angegeben sind."
                     };
                 }
 
-                // Überprüfen, ob der Gegner existiert
-                var opponent = UserRepository.GetUser(battleDto.OpponentUsername);
-                if (opponent == null)
+                // Authentifizierung prüfen
+                var authHeader = request.Authorization;
+                if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
                 {
                     return new HttpResponse
                     {
-                        StatusCode = 404,
+                        StatusCode = 401,
                         ContentType = "text/plain",
-                        Body = "Opponent user not found."
+                        Body = "Unauthorized: Kein gültiges Token"
                     };
                 }
 
-                // Holen der Decks beider Spieler
-                var playerDeck = DeckRepository.GetDeck(username);
-                var opponentDeck = DeckRepository.GetDeck(battleDto.OpponentUsername);
-
-                if (playerDeck == null || opponentDeck == null)
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+                var username = GetUsernameByToken(token);
+                if (username == null || username != battleDto.Username)
                 {
                     return new HttpResponse
                     {
-                        StatusCode = 400,
+                        StatusCode = 401,
                         ContentType = "text/plain",
-                        Body = "Both players must have a defined deck to initiate a battle."
+                        Body = "Unauthorized: Ungültiges Token oder Username stimmt nicht überein."
                     };
                 }
 
-                // Holen der Karten
-                var playerCards = CardRepository.GetCardsByIds(playerDeck.CardIds);
-                var opponentCards = CardRepository.GetCardsByIds(opponentDeck.CardIds);
-
-                // Durchführen des Kampfes
-                var battleResult = BattleLogic.PerformBattle(playerCards, opponentCards);
-
-                // Erstellen des Kampfprotokolls
-                string battleLog = battleResult.Log;
-
-                // Aktualisieren der ELO-Werte
-                if (battleResult.Winner != null)
-                {
-                    UserRepository.UpdateELO(battleResult.Winner, +3);
-                    string loser = battleResult.Winner == username ? battleDto.OpponentUsername : username;
-                    UserRepository.UpdateELO(loser, -5);
-                }
-
-                // Speichern des Kampfes
-                var battle = new Battle
-                {
-                    Player1Username = username,
-                    Player2Username = battleDto.OpponentUsername,
-                    BattleLog = battleLog,
-                    WinnerUsername = battleResult.Winner,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                BattleRepository.AddBattle(battle);
-
-                // Antwort mit Kampfprotokoll und Ergebnis
-                var responseBody = JsonSerializer.Serialize(new
-                {
-                    BattleId = battle.Id,
-                    Winner = battleResult.Winner,
-                    BattleLog = battleLog
-                });
-
+                var battle = battleLogic.StartBattle(battleDto.Username, battleDto.CardIds);
+                
                 return new HttpResponse
                 {
-                    StatusCode = 200,
+                    StatusCode = 201,
                     ContentType = "application/json",
-                    Body = responseBody
+                    Body = JsonSerializer.Serialize(new { battle.Id, battle.Status, battle.PlayerHealth, battle.OpponentHealth })
                 };
             }
             catch (Exception ex)
@@ -126,30 +89,114 @@ namespace MonsterCardTradingGame.Controllers
                 {
                     StatusCode = 500,
                     ContentType = "text/plain",
-                    Body = $"Error initiating battle: {ex.Message}"
+                    Body = $"Interner Serverfehler: {ex.Message}"
                 };
             }
         }
 
-        // Helper method to check authentication
-        private static bool IsAuthenticated(HttpRequest request, out string? username)
+        private static HttpResponse PerformBattleTurn(HttpRequest request)
         {
-            username = null;
-            var authHeader = request.Authorization;
-            if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
+            try
             {
-                return false;
+                var pathParts = request.Path.Split('/');
+                if (pathParts.Length < 3 || !Guid.TryParse(pathParts[2], out Guid battleId))
+                {
+                    return new HttpResponse
+                    {
+                        StatusCode = 400,
+                        ContentType = "text/plain",
+                        Body = "Ungültige Battle-ID."
+                    };
+                }
+
+                var battle = battleLogic.PerformBattleTurn(battleId);
+                
+                return new HttpResponse
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Body = JsonSerializer.Serialize(new 
+                    { 
+                        battle.Id, 
+                        battle.Status, 
+                        battle.PlayerHealth, 
+                        battle.OpponentHealth,
+                        battle.Logs 
+                    })
+                };
             }
-
-            var token = authHeader.Substring("Bearer ".Length).Trim();
-            username = UserRepository.GetUsernameByToken(token);
-            return username != null;
+            catch (Exception ex)
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 500,
+                    ContentType = "text/plain",
+                    Body = $"Interner Serverfehler: {ex.Message}"
+                };
+            }
         }
 
-        // DTO für den Kampf-Request
-        public class BattleRequestDto
+        private static HttpResponse GetBattleStatus(HttpRequest request)
         {
-            public string OpponentUsername { get; set; } = string.Empty;
+            try
+            {
+                var pathParts = request.Path.Split('/');
+                if (pathParts.Length < 3 || !Guid.TryParse(pathParts[2], out Guid battleId))
+                {
+                    return new HttpResponse
+                    {
+                        StatusCode = 400,
+                        ContentType = "text/plain",
+                        Body = "Ungültige Battle-ID."
+                    };
+                }
+
+                var battle = BattleRepository.GetBattle(battleId);
+                if (battle == null)
+                {
+                    return new HttpResponse
+                    {
+                        StatusCode = 404,
+                        ContentType = "text/plain",
+                        Body = "Battle nicht gefunden."
+                    };
+                }
+
+                return new HttpResponse
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Body = JsonSerializer.Serialize(new 
+                    { 
+                        battle.Id, 
+                        battle.Status, 
+                        battle.PlayerHealth, 
+                        battle.OpponentHealth,
+                        battle.Logs 
+                    })
+                };
+            }
+            catch (Exception ex)
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 500,
+                    ContentType = "text/plain",
+                    Body = $"Interner Serverfehler: {ex.Message}"
+                };
+            }
         }
+
+        private static string? GetUsernameByToken(string token)
+        {
+            return UserRepository.GetUsernameByToken(token);
+        }
+    }
+
+    // DTO für den Start einer Battle
+    public class StartBattleDto
+    {
+        public string Username { get; set; } = string.Empty;
+        public List<int> CardIds { get; set; } = new List<int>();
     }
 }

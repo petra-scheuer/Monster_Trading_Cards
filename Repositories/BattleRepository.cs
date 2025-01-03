@@ -1,41 +1,45 @@
 // Repositories/BattleRepository.cs
 using System;
-using MonsterCardTradingGame.Models;
 using System.Collections.Generic;
+using System.Linq;
+using MonsterCardTradingGame.Models;
 
 namespace MonsterCardTradingGame.Repositories
 {
     public static class BattleRepository
     {
-        public static bool AddBattle(Battle battle)
-        {
-            const string sql = @"INSERT INTO battles (player1_username, player2_username, battle_log, winner_username, created_at)
-                                 VALUES (@p1, @p2, @log, @winner, @created_at)";
-            DatabaseManager.ExecuteNonQuery(sql,
-                ("p1", battle.Player1Username),
-                ("p2", battle.Player2Username),
-                ("log", battle.BattleLog),
-                ("winner", (object?)battle.WinnerUsername ?? DBNull.Value),
-                ("created_at", battle.CreatedAt));
-            return true;
-        }
+        private static List<Battle> Battles = new List<Battle>();
 
-        public static List<Battle> GetAllBattles()
+        public static Battle CreateBattle(string playerUsername, List<int> playerCardIds, string opponentUsername = "AI")
         {
-            const string sql = @"SELECT id, player1_username, player2_username, battle_log, winner_username, created_at FROM battles";
-            return DatabaseManager.ExecuteReader(sql, reader =>
+            var battle = new Battle
             {
-                return new Battle
-                {
-                    Id = reader.GetInt32(0),
-                    Player1Username = reader.GetString(1),
-                    Player2Username = reader.GetString(2),
-                    BattleLog = reader.GetString(3),
-                    WinnerUsername = reader.IsDBNull(4) ? null : reader.GetString(4),
-                    CreatedAt = reader.GetDateTime(5)
-                };
-            });
+                PlayerUsername = playerUsername,
+                OpponentUsername = opponentUsername,
+                PlayerCardIds = playerCardIds
+                // OpponentCardIds können zufällig generiert oder aus vordefinierten Decks ausgewählt werden
+            };
+            Battles.Add(battle);
+            return battle;
         }
 
+        public static Battle? GetBattle(Guid battleId)
+        {
+            return Battles.FirstOrDefault(b => b.Id == battleId);
+        }
+
+        public static void UpdateBattle(Battle battle)
+        {
+            var index = Battles.FindIndex(b => b.Id == battle.Id);
+            if (index != -1)
+            {
+                Battles[index] = battle;
+            }
+        }
+
+        public static List<Battle> GetBattlesByPlayer(string playerUsername)
+        {
+            return Battles.Where(b => b.PlayerUsername == playerUsername || b.OpponentUsername == playerUsername).ToList();
+        }
     }
 }

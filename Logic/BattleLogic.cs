@@ -2,133 +2,75 @@
 using System;
 using System.Collections.Generic;
 using MonsterCardTradingGame.Models;
+using MonsterCardTradingGame.Repositories;
 
 namespace MonsterCardTradingGame.Logic
 {
-    public class BattleResult
+    public class BattleLogic
     {
-        public string? Winner { get; set; }
-        public string Log { get; set; } = string.Empty;
-    }
-
-    public static class BattleLogic
-    {
-        private static readonly Random Random = new Random();
-
-        public static BattleResult PerformBattle(List<Card> player1Cards, List<Card> player2Cards)
+        public Battle StartBattle(string playerUsername, List<int> playerCardIds)
         {
-            var result = new BattleResult();
-            var logBuilder = new System.Text.StringBuilder();
-
-            int round = 0;
-            int maxRounds = 100;
-            string? winner = null;
-
-            // Kopien der Decks, um Karten zu entfernen
-            var p1Deck = new List<Card>(player1Cards);
-            var p2Deck = new List<Card>(player2Cards);
-
-            while (round < maxRounds && p1Deck.Count > 0 && p2Deck.Count > 0)
-            {
-                round++;
-                logBuilder.AppendLine($"--- Runde {round} ---");
-
-                // Zufällige Karten auswählen
-                var p1Card = p1Deck[Random.Next(p1Deck.Count)];
-                var p2Card = p2Deck[Random.Next(p2Deck.Count)];
-
-                logBuilder.AppendLine($"{p1Card.Name} ({p1Card.Type}, {p1Card.Element}) vs {p2Card.Name} ({p2Card.Type}, {p2Card.Element})");
-
-                // Berechnung des Schadens
-                int p1Damage = CalculateDamage(p1Card, p2Card);
-                int p2Damage = CalculateDamage(p2Card, p1Card);
-
-                logBuilder.AppendLine($"Schaden: {p1Card.Name} verursacht {p1Damage} Schaden, {p2Card.Name} verursacht {p2Damage} Schaden");
-
-                if (p1Damage > p2Damage)
-                {
-                    logBuilder.AppendLine($"{p1Card.Name} gewinnt die Runde.");
-                    // p2Card wird dem p1Deck hinzugefügt
-                    p1Deck.Add(p2Card);
-                    p2Deck.Remove(p2Card);
-                }
-                else if (p2Damage > p1Damage)
-                {
-                    logBuilder.AppendLine($"{p2Card.Name} gewinnt die Runde.");
-                    // p1Card wird dem p2Deck hinzugefügt
-                    p2Deck.Add(p1Card);
-                    p1Deck.Remove(p1Card);
-                }
-                else
-                {
-                    logBuilder.AppendLine("Unentschieden. Keine Karten werden verschoben.");
-                }
-            }
-
-            // Bestimmen des Gewinners
-            if (p1Deck.Count > p2Deck.Count)
-            {
-                winner = "player1";
-                logBuilder.AppendLine($"Spieler 1 gewinnt das Spiel nach {round} Runden.");
-            }
-            else if (p2Deck.Count > p1Deck.Count)
-            {
-                winner = "player2";
-                logBuilder.AppendLine($"Spieler 2 gewinnt das Spiel nach {round} Runden.");
-            }
-            else
-            {
-                logBuilder.AppendLine($"Das Spiel endet unentschieden nach {round} Runden.");
-            }
-
-            result.Winner = winner;
-            result.Log = logBuilder.ToString();
-            return result;
+            // Optionale Logik zur Validierung der Karten des Spielers
+            var battle = BattleRepository.CreateBattle(playerUsername, playerCardIds);
+            
+            // Optionale Logik zur Auswahl der Karten des Gegners
+            // Zum Beispiel zufällige Auswahl aus den Karten des Gegners
+            
+            // Initialen Battle-Log hinzufügen
+            battle.Logs.Add(new BattleLog { Action = "Battle gestartet zwischen " + playerUsername + " und AI." });
+            BattleRepository.UpdateBattle(battle);
+            
+            return battle;
         }
 
-        private static int CalculateDamage(Card attacker, Card defender)
+        public Battle PerformBattleTurn(Guid battleId)
         {
-            int damage = attacker.Damage;
+            var battle = BattleRepository.GetBattle(battleId);
+            if (battle == null || battle.Status != "In Progress")
+                throw new Exception("Battle nicht gefunden oder bereits abgeschlossen.");
 
-            if (attacker.Type.ToLower() == "spell")
+            // Beispielhafte einfache Logik:
+            // Spieler greift zuerst an
+            var playerDamage = CalculateDamage(battle.PlayerCardIds);
+            battle.OpponentHealth -= playerDamage;
+            battle.Logs.Add(new BattleLog { Action = $"Spieler greift für {playerDamage} Schaden an." });
+
+            if (battle.OpponentHealth <= 0)
             {
-                // Element-Effectiveness
-                damage = ApplyElementEffectiveness(attacker.Element.ToLower(), defender.Element.ToLower(), damage);
+                battle.Status = "Completed";
+                battle.Logs.Add(new BattleLog { Action = "Spieler gewinnt den Kampf!" });
+                BattleRepository.UpdateBattle(battle);
+                return battle;
             }
 
-            return damage;
+            // Gegner (AI) greift an
+            var opponentDamage = CalculateDamage(battle.OpponentCardIds);
+            battle.PlayerHealth -= opponentDamage;
+            battle.Logs.Add(new BattleLog { Action = $"AI greift für {opponentDamage} Schaden an." });
+
+            if (battle.PlayerHealth <= 0)
+            {
+                battle.Status = "Completed";
+                battle.Logs.Add(new BattleLog { Action = "AI gewinnt den Kampf!" });
+            }
+
+            BattleRepository.UpdateBattle(battle);
+            return battle;
         }
 
-        private static int ApplyElementEffectiveness(string attackerElement, string defenderElement, int damage)
+        private int CalculateDamage(List<int> cardIds)
         {
-            // Effektivität: Wasser > Feuer, Feuer > Normal, Normal > Wasser
-            if (attackerElement == "water" && defenderElement == "fire")
+            // Beispielhafte Schadensberechnung:
+            // Summe der Schadenswerte aller Karten
+            int damage = 0;
+            foreach (var id in cardIds)
             {
-                return damage * 2;
+                var card = CardRepository.GetCardById(id);
+                if (card != null)
+                {
+                    damage += card.Damage;
+                }
             }
-            if (attackerElement == "fire" && defenderElement == "normal")
-            {
-                return damage * 2;
-            }
-            if (attackerElement == "normal" && defenderElement == "water")
-            {
-                return damage * 2;
-            }
-
-            if (attackerElement == "fire" && defenderElement == "water")
-            {
-                return damage / 2;
-            }
-            if (attackerElement == "normal" && defenderElement == "fire")
-            {
-                return damage / 2;
-            }
-            if (attackerElement == "water" && defenderElement == "normal")
-            {
-                return damage / 2;
-            }
-
-            // Keine Effektivität
             return damage;
         }
     }
