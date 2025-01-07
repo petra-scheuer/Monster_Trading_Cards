@@ -1,4 +1,3 @@
-// Controllers/BattlesController.cs
 using System;
 using System.Text.Json;
 using MonsterCardTradingGame.Models;
@@ -9,7 +8,8 @@ namespace MonsterCardTradingGame.Controllers
 {
     public static class BattlesController
     {
-        private static BattleLogic battleLogic = new BattleLogic();
+        // Instanz unserer Battle-Logik
+        private static readonly BattleLogic battleLogic = new BattleLogic();
 
         public static HttpResponse Handle(HttpRequest request)
         {
@@ -21,12 +21,17 @@ namespace MonsterCardTradingGame.Controllers
             {
                 return PerformBattleTurn(request);
             }
+            else if (request.Method == "POST" && request.Path.StartsWith("/battles/") && request.Path.EndsWith("/finish"))
+            {
+                // NEU: Route für das komplette Durchspielen
+                return PerformBattleToTheEnd(request);
+            }
             else if (request.Method == "GET" && request.Path.StartsWith("/battles/"))
             {
                 return GetBattleStatus(request);
             }
 
-            // Falls nichts passt, 400 Bad Request
+            // Falls keine der obigen Bedingungen greift -> Bad Request
             return new HttpResponse
             {
                 StatusCode = 400,
@@ -40,7 +45,10 @@ namespace MonsterCardTradingGame.Controllers
             try
             {
                 var battleDto = JsonSerializer.Deserialize<StartBattleDto>(request.Body);
-                if (battleDto == null || string.IsNullOrWhiteSpace(battleDto.Username) || battleDto.CardIds == null || battleDto.CardIds.Count != 4)
+                if (battleDto == null ||
+                    string.IsNullOrWhiteSpace(battleDto.Username) ||
+                    battleDto.CardIds == null ||
+                    battleDto.CardIds.Count != 4)
                 {
                     return new HttpResponse
                     {
@@ -74,13 +82,20 @@ namespace MonsterCardTradingGame.Controllers
                     };
                 }
 
+                // Battle starten
                 var battle = battleLogic.StartBattle(battleDto.Username, battleDto.CardIds);
-                
+
                 return new HttpResponse
                 {
                     StatusCode = 201,
                     ContentType = "application/json",
-                    Body = JsonSerializer.Serialize(new { battle.Id, battle.Status, battle.PlayerHealth, battle.OpponentHealth })
+                    Body = JsonSerializer.Serialize(new
+                    {
+                        battle.Id,
+                        battle.Status,
+                        battle.PlayerHealth,
+                        battle.OpponentHealth
+                    })
                 };
             }
             catch (Exception ex)
@@ -110,18 +125,66 @@ namespace MonsterCardTradingGame.Controllers
                 }
 
                 var battle = battleLogic.PerformBattleTurn(battleId);
-                
+
                 return new HttpResponse
                 {
                     StatusCode = 200,
                     ContentType = "application/json",
-                    Body = JsonSerializer.Serialize(new 
-                    { 
-                        battle.Id, 
-                        battle.Status, 
-                        battle.PlayerHealth, 
+                    Body = JsonSerializer.Serialize(new
+                    {
+                        battle.Id,
+                        battle.Status,
+                        battle.PlayerHealth,
                         battle.OpponentHealth,
-                        battle.Logs 
+                        battle.Logs
+                    })
+                };
+            }
+            catch (Exception ex)
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 500,
+                    ContentType = "text/plain",
+                    Body = $"Interner Serverfehler: {ex.Message}"
+                };
+            }
+        }
+
+        /// <summary>
+        /// NEU: Komplettes Ausspielen des Battles bis max. 100 Runden
+        /// </summary>
+        private static HttpResponse PerformBattleToTheEnd(HttpRequest request)
+        {
+            try
+            {
+                var pathParts = request.Path.Split('/');
+                // Pfad erwartet: /battles/{id}/finish
+                if (pathParts.Length < 3 || !Guid.TryParse(pathParts[2], out Guid battleId))
+                {
+                    return new HttpResponse
+                    {
+                        StatusCode = 400,
+                        ContentType = "text/plain",
+                        Body = "Ungültige Battle-ID."
+                    };
+                }
+
+                // Ganze Schlacht durchspielen
+                var battle = battleLogic.PerformFullBattle(battleId);
+
+                // Ergebnis als JSON zurückgeben
+                return new HttpResponse
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Body = JsonSerializer.Serialize(new
+                    {
+                        battle.Id,
+                        battle.Status,
+                        PlayerCards = battle.PlayerCardIds,
+                        OpponentCards = battle.OpponentCardIds,
+                        Logs = battle.Logs
                     })
                 };
             }
@@ -166,13 +229,13 @@ namespace MonsterCardTradingGame.Controllers
                 {
                     StatusCode = 200,
                     ContentType = "application/json",
-                    Body = JsonSerializer.Serialize(new 
-                    { 
-                        battle.Id, 
-                        battle.Status, 
-                        battle.PlayerHealth, 
+                    Body = JsonSerializer.Serialize(new
+                    {
+                        battle.Id,
+                        battle.Status,
+                        battle.PlayerHealth,
                         battle.OpponentHealth,
-                        battle.Logs 
+                        battle.Logs
                     })
                 };
             }
