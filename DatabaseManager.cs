@@ -132,6 +132,18 @@ namespace MonsterCardTradingGame
     ";
 
     ExecuteNonQuery(createTradesTable);
+    
+    const string createPowerUpsTable = @"
+    CREATE TABLE IF NOT EXISTS powerups (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) REFERENCES users(username) ON DELETE CASCADE,
+        powerup_type VARCHAR(50) NOT NULL, -- z.B. 'double_damage'
+        is_used BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+";
+    ExecuteNonQuery(createPowerUpsTable);
+
 
     // **Stelle sicher, dass der "system" Benutzer existiert**
     bool systemUserCreated = UserRepository.EnsureSystemUserExists();

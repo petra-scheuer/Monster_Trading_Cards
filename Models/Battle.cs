@@ -16,5 +16,6 @@ namespace MonsterCardTradingGame.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string Status { get; set; } = "In Progress"; // "In Progress", "Completed"
         public List<BattleLog> Logs { get; set; } = new List<BattleLog>();
+        public string NextRoundPowerUpUser { get; set; }
     }
 }

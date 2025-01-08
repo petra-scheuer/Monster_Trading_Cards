@@ -42,6 +42,11 @@ namespace MonsterCardTradingGame
             {
                 return TradesController.Handle(request);
             }
+            else if (request.Path.StartsWith("/powerups"))
+            {
+                return PowerUpsController.Handle(request);
+            }
+
             // Weitere Controller können hier hinzugefügt werden
             else
             {
