@@ -1,9 +1,7 @@
-// HttpServer.cs
 using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace MonsterCardTradingGame
@@ -19,7 +17,7 @@ namespace MonsterCardTradingGame
             _port = port;
         }
 
-        public void Start()
+        public async void Start()
         {
             _listener = new TcpListener(IPAddress.Any, _port);
             _listener.Start();
@@ -27,26 +25,22 @@ namespace MonsterCardTradingGame
 
             Console.WriteLine($"[HttpServer] Server running on port {_port} ...");
 
-            // Wir starten einen Task, damit die Accept-Schleife nicht den Main-Thread blockiert.
-            Task.Run(() =>
+            // Asynchrone Akzeptierung von Clients
+            while (_isRunning)
             {
-                while (_isRunning)
+                try
                 {
-                    try
-                    {
-                        // Blockiert, bis ein neuer Client sich verbindet
-                        var client = _listener.AcceptTcpClient();
-                        Console.WriteLine("[HttpServer] Client connected!");
+                    var client = await _listener.AcceptTcpClientAsync();
+                    Console.WriteLine("[HttpServer] Client connected!");
 
-                        // Wir geben die Client-Verarbeitung an einen ThreadPool-Worker
-                        ThreadPool.QueueUserWorkItem(HandleClient, client);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[HttpServer] Error accepting client: {ex.Message}");
-                    }
+                    // Asynchrone Verarbeitung des Clients
+                    _ = HandleClientAsync(client);
                 }
-            });
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[HttpServer] Error accepting client: {ex.Message}");
+                }
+            }
         }
 
         public void Stop()
@@ -56,46 +50,47 @@ namespace MonsterCardTradingGame
             Console.WriteLine("[HttpServer] Server stopped.");
         }
 
-        private void HandleClient(object clientObj)
+        private async Task HandleClientAsync(TcpClient client)
         {
-            using var client = (TcpClient)clientObj;
-            using var stream = client.GetStream();
-
-            try
+            using (client)
+            using (var stream = client.GetStream())
             {
-                // Request parsen
-                var request = HttpRequestParser.ParseFromStream(stream);
-                Console.WriteLine($"[HttpServer] Request => Method: {request.Method}, Path: {request.Path}");
-
-                // Router aufrufen
-                var response = Router.Route(request);
-
-                // Antwort in den Stream schreiben
-                var responseBytes = response.GetBytes();
-                stream.Write(responseBytes, 0, responseBytes.Length);
-                Console.WriteLine($"[HttpServer] Response sent with StatusCode: {response.StatusCode}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[HttpServer] Error parsing HTTP: {ex.Message}");
-
-                // Fehler-Antwort: Hier sehr minimal gehalten
-                using var writer = new StreamWriter(stream)
+                try
                 {
-                    NewLine = "\r\n"  // erzwingt CRLF bei WriteLine
-                };
+                    // Request parsen
+                    var request = await HttpRequestParser.ParseFromStreamAsync(stream);
+                    Console.WriteLine($"[HttpServer] Request => Method: {request.Method}, Path: {request.Path}");
 
-                // Statuszeile
-                writer.WriteLine("HTTP/1.1 400 Bad Request");
-                // Header
-                writer.WriteLine("Content-Type: text/plain");
-                // Ende der Header
-                writer.WriteLine();
+                    // Router aufrufen
+                    var response = Router.Route(request);
 
-                // Body
-                writer.WriteLine($"Error: {ex.Message}");
+                    // Antwort in den Stream schreiben
+                    var responseBytes = response.GetBytes();
+                    await stream.WriteAsync(responseBytes, 0, responseBytes.Length);
+                    Console.WriteLine($"[HttpServer] Response sent with StatusCode: {response.StatusCode}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[HttpServer] Error parsing HTTP: {ex.Message}");
 
-                writer.Flush();
+                    // Fehler-Antwort: Hier sehr minimal gehalten
+                    using var writer = new StreamWriter(stream)
+                    {
+                        NewLine = "\r\n"  // erzwingt CRLF bei WriteLine
+                    };
+
+                    // Statuszeile
+                    await writer.WriteLineAsync("HTTP/1.1 400 Bad Request");
+                    // Header
+                    await writer.WriteLineAsync("Content-Type: text/plain");
+                    // Ende der Header
+                    await writer.WriteLineAsync();
+
+                    // Body
+                    await writer.WriteLineAsync($"Error: {ex.Message}");
+
+                    await writer.FlushAsync();
+                }
             }
         }
     }
