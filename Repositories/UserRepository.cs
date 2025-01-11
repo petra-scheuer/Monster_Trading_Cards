@@ -34,6 +34,13 @@ namespace MonsterCardTradingGame.Repositories
             return true;
         }
 
+        public static bool UpdateCoins(string username, int coinChange)
+        {
+            const string sql = @"UPDATE users SET coins = coins + @change WHERE username = @u";
+            DatabaseManager.ExecuteNonQuery(sql, ("change", coinChange), ("u", username));
+            return true;
+        }
+
         /// <summary>
         /// Holt einen Benutzer aus der Datenbank.
         /// </summary>

@@ -31,11 +31,17 @@ namespace MonsterCardTradingGame.Controllers
                 Body = "Bad Request in PackagesController"
             };
         }
-
+        
         private static bool DeductCoins(string username, int amount)
         {
             var user = UserRepository.GetUser(username);
-            if (user == null || user.Coins < amount)
+            if (user == null)
+            {
+                // Benutzer nicht gefunden
+                return false;
+            }
+
+            if (user.Coins < amount)
             {
                 return false;
             }

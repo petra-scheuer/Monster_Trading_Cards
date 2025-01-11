@@ -379,12 +379,4 @@ namespace MonsterCardTradingGame.Controllers
             return UserRepository.GetUsernameByToken(token);
         }
     }
-
-    // DTO (neu) für den Start einer Battle
-    public class StartBattleRequestDto
-    {
-        public string Username { get; set; } = string.Empty;
-        // Optional: Falls man gegen jemanden anderen als "AI" kämpfen will,
-        // könnte man hier z.B. OpponentUsername ergänzen.
-    }
 }
