@@ -197,9 +197,11 @@ namespace MonsterCardTradingGame.Repositories
             }
             catch (Exception ex)
             {
-                // Optional: Logge den Fehler
+                // Beispiel: Fehler protokollieren mit Console (ersetzten Sie dies durch ein Logging-Framework)
+                Console.Error.WriteLine($"Fehler beim Aktualisieren des Passworts für Benutzer '{username}': {ex.Message}");
                 return false;
             }
+
         }
 
     }
