@@ -10,6 +10,7 @@
     &lt;ProjectFile&gt;F074B6FB-D23B-47C9-9CC8-06A2A8D1E08F/d:TestProject/f:SessionsControllerTests.cs&lt;/ProjectFile&gt;
     &lt;ProjectFile&gt;F074B6FB-D23B-47C9-9CC8-06A2A8D1E08F/d:TestProject/f:CardsControllerTests.cs&lt;/ProjectFile&gt;
     &lt;ProjectFile&gt;F074B6FB-D23B-47C9-9CC8-06A2A8D1E08F/d:TestProject/f:PackagesControllerTests.cs&lt;/ProjectFile&gt;
+    &lt;ProjectFile&gt;F074B6FB-D23B-47C9-9CC8-06A2A8D1E08F/d:TestProject/f:TradesControllerTests.cs&lt;/ProjectFile&gt;
   &lt;/Or&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d140868c_002D89c3_002D4e82_002Db2f7_002D7bbe7b5b89bc/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="UnitTest1" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
