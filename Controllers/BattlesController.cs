@@ -48,14 +48,13 @@ namespace MonsterCardTradingGame.Controllers
             };
         }
 
-        // ================================================================
-        // 1) START BATTLE (Deck wird aus DB gelesen)
-        // ================================================================
+        // 1) BATTLE STARTEN (Deck wird aus der Datenbank gelesen)
+
         private static HttpResponse StartBattle(HttpRequest request)
         {
             try
             {
-                // Neuer DTO-Name: wir erwarten nur Username
+                // Neuer DTO-Name: Wir erwarten nur den Benutzernamen
                 var battleRequest = JsonSerializer.Deserialize<StartBattleRequestDto>(request.Body);
                 if (battleRequest == null || string.IsNullOrWhiteSpace(battleRequest.Username))
                 {
@@ -91,7 +90,7 @@ namespace MonsterCardTradingGame.Controllers
                     };
                 }
 
-                // Deck aus der DB laden
+                // Deck aus der Datenbank laden
                 var deck = DeckRepository.GetDeck(usernameFromToken);
                 if (deck == null || deck.CardIds.Count != 4)
                 {
@@ -130,9 +129,9 @@ namespace MonsterCardTradingGame.Controllers
             }
         }
 
-        // ================================================================
-        // 2) PERFORM BATTLE TURN (optional Feature)
-        // ================================================================
+
+        // 2) BATTLE-RUNDE AUSFÜHREN (optional Feature)
+
         private static HttpResponse PerformBattleTurn(HttpRequest request)
         {
             try
@@ -175,9 +174,9 @@ namespace MonsterCardTradingGame.Controllers
             }
         }
 
-        // ================================================================
-        // 3) FINISH BATTLE (gesamtes Battle in einem Rutsch)
-        // ================================================================
+
+        // 3) BATTLE ABSCHLIESSEN (gesamtes Battle in einem Rutsch)
+
         private static HttpResponse PerformBattleToTheEnd(HttpRequest request)
         {
             try
@@ -222,9 +221,9 @@ namespace MonsterCardTradingGame.Controllers
             }
         }
 
-        // ================================================================
-        // 4) USE POWERUP (/battles/{id}/usepowerup)
-        // ================================================================
+
+        // 4) POWERUP IN BATTLE VERWENDEN (/battles/{id}/usepowerup)
+
         private static HttpResponse UsePowerUpInBattle(HttpRequest request)
         {
             try
@@ -240,7 +239,7 @@ namespace MonsterCardTradingGame.Controllers
                     };
                 }
 
-                // Auth-Check
+                // Authentifizierungsprüfung
                 var authHeader = request.Authorization;
                 if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
                 {
@@ -264,7 +263,7 @@ namespace MonsterCardTradingGame.Controllers
                     };
                 }
 
-                // Hat user einen ungenutzten PowerUp?
+                // Prüfen, ob der Benutzer ungenutzte PowerUps hat
                 var unusedPowerUps = PowerUpRepository.GetPowerUps(username, onlyUnused: true);
                 if (unusedPowerUps.Count == 0)
                 {
@@ -276,13 +275,13 @@ namespace MonsterCardTradingGame.Controllers
                     };
                 }
 
-                // Nimm den ersten ungenutzten
+                // Das erste ungenutzte PowerUp auswählen
                 var powerUp = unusedPowerUps[0];
 
-                // Markiere ihn als benutzt
+                // PowerUp als benutzt markieren
                 PowerUpRepository.MarkPowerUpAsUsed(powerUp.Id);
 
-                // Hole das Battle
+                // Das Battle abrufen
                 var battle = BattleRepository.GetBattle(battleId);
                 if (battle == null || battle.Status != "In Progress")
                 {
@@ -294,7 +293,7 @@ namespace MonsterCardTradingGame.Controllers
                     };
                 }
 
-                // Setze im Battle ein Flag für "nächste Runde Double-Damage"
+                // Im Battle ein Flag für "nächste Runde Double-Damage" setzen
                 battle.NextRoundPowerUpUser = username;
                 BattleRepository.UpdateBattle(battle);
 
@@ -316,9 +315,7 @@ namespace MonsterCardTradingGame.Controllers
             }
         }
 
-        // ================================================================
-        // 5) GET BATTLE STATUS
-        // ================================================================
+        // 5) BATTLE-STATUS ABFRAGEN
         private static HttpResponse GetBattleStatus(HttpRequest request)
         {
             try
@@ -371,9 +368,9 @@ namespace MonsterCardTradingGame.Controllers
             }
         }
 
-        // ================================================================
-        // HILFSFUNKTION: USERNAME VIA TOKEN
-        // ================================================================
+        
+        // HILFSFUNKTION: BENUTZERNAME AUS TOKEN ERHALTEN
+        
         private static string? GetUsernameByToken(string token)
         {
             return UserRepository.GetUsernameByToken(token);

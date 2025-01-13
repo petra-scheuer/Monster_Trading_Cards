@@ -1,10 +1,7 @@
-// CardsController.cs
-
 using System;
 using System.Text.Json;
 using System.Collections.Generic;
 using MonsterCardTradingGame.Repositories;
-
 
 namespace MonsterCardTradingGame.Controllers
 {
@@ -18,7 +15,7 @@ namespace MonsterCardTradingGame.Controllers
                 {
                     StatusCode = 401,
                     ContentType = "text/plain",
-                    Body = "Unauthorized: Invalid or missing token."
+                    Body = "Unauthorized: Ungültiges oder fehlendes Token."
                 };
             }
 
@@ -34,17 +31,17 @@ namespace MonsterCardTradingGame.Controllers
             {
                 return DeleteCard(username!, request);
             }
-            // Additional endpoints (e.g., update card) can be added here
+            // Weitere Endpunkte (z.B. Karte aktualisieren) können hier hinzugefügt werden
 
             return new HttpResponse
             {
                 StatusCode = 400,
                 ContentType = "text/plain",
-                Body = "Bad Request in CardsController"
+                Body = "Ungültige Anfrage im CardsController."
             };
         }
 
-        // Helper method to check authentication
+        // Hilfsmethode zur Überprüfung der Authentifizierung
         private static bool IsAuthenticated(HttpRequest request, out string? username)
         {
             username = null;
@@ -59,7 +56,7 @@ namespace MonsterCardTradingGame.Controllers
             return username != null;
         }
 
-        // Handles GET /cards
+        // Behandelt GET /cards
         private static HttpResponse GetUserCards(string username)
         {
             var cards = CardRepository.GetUserCards(username);
@@ -73,7 +70,7 @@ namespace MonsterCardTradingGame.Controllers
             };
         }
 
-        // Handles POST /cards
+        // Behandelt POST /cards
         private static HttpResponse AddCard(string username, HttpRequest request)
         {
             try
@@ -87,11 +84,11 @@ namespace MonsterCardTradingGame.Controllers
                     {
                         StatusCode = 400,
                         ContentType = "text/plain",
-                        Body = "Invalid card data."
+                        Body = "Ungültige Kartendaten."
                     };
                 }
 
-                // Validate card type
+                // Kartentyp validieren
                 var cardType = cardDto.Type.ToLower();
                 if (cardType != "spell" && cardType != "monster")
                 {
@@ -99,11 +96,11 @@ namespace MonsterCardTradingGame.Controllers
                     {
                         StatusCode = 400,
                         ContentType = "text/plain",
-                        Body = "Invalid card type. Must be 'spell' or 'monster'."
+                        Body = "Ungültiger Kartentyp. Muss 'spell' oder 'monster' sein."
                     };
                 }
 
-                // Validate element type
+                // Elementtyp validieren
                 var elementType = cardDto.Element.ToLower();
                 if (elementType != "fire" && elementType != "water" && elementType != "normal")
                 {
@@ -111,11 +108,11 @@ namespace MonsterCardTradingGame.Controllers
                     {
                         StatusCode = 400,
                         ContentType = "text/plain",
-                        Body = "Invalid element type. Must be 'fire', 'water', or 'normal'."
+                        Body = "Ungültiger Elementtyp. Muss 'fire', 'water' oder 'normal' sein."
                     };
                 }
 
-                // Create the appropriate card type
+                // Erstelle den entsprechenden Kartentyp
                 Card newCard = cardType switch
                 {
                     "spell" => new SpellCard
@@ -132,17 +129,17 @@ namespace MonsterCardTradingGame.Controllers
                         Damage = cardDto.Damage,
                         Element = elementType
                     },
-                    _ => throw new Exception("Invalid card type.")
+                    _ => throw new Exception("Ungültiger Kartentyp.")
                 };
 
-                // Add the card to the repository
+                // Füge die Karte dem Repository hinzu
                 CardRepository.AddCard(username, newCard);
 
                 return new HttpResponse
                 {
                     StatusCode = 201,
                     ContentType = "text/plain",
-                    Body = "Card added successfully."
+                    Body = "Karte erfolgreich hinzugefügt."
                 };
             }
             catch (Exception ex)
@@ -151,15 +148,15 @@ namespace MonsterCardTradingGame.Controllers
                 {
                     StatusCode = 400,
                     ContentType = "text/plain",
-                    Body = $"Error adding card: {ex.Message}"
+                    Body = $"Fehler beim Hinzufügen der Karte: {ex.Message}"
                 };
             }
         }
 
-        // Handles DELETE /cards/{id}
+        // Behandelt DELETE /cards/{id}
         private static HttpResponse DeleteCard(string username, HttpRequest request)
         {
-            // Path format: /cards/{id}
+            // Pfadformat: /cards/{id}
             var segments = request.Path.Split('/');
             if (segments.Length != 3 || !int.TryParse(segments[2], out int cardId))
             {
@@ -167,7 +164,7 @@ namespace MonsterCardTradingGame.Controllers
                 {
                     StatusCode = 400,
                     ContentType = "text/plain",
-                    Body = "Invalid card ID in path."
+                    Body = "Ungültige Karten-ID im Pfad."
                 };
             }
 
@@ -178,7 +175,7 @@ namespace MonsterCardTradingGame.Controllers
                 {
                     StatusCode = 200,
                     ContentType = "text/plain",
-                    Body = "Card removed successfully."
+                    Body = "Karte erfolgreich entfernt."
                 };
             }
             else
@@ -187,16 +184,16 @@ namespace MonsterCardTradingGame.Controllers
                 {
                     StatusCode = 404,
                     ContentType = "text/plain",
-                    Body = "Card not found or does not belong to the user."
+                    Body = "Karte nicht gefunden oder gehört nicht zum Benutzer."
                 };
             }
         }
 
-        // DTO for adding a card
+        // DTO zum Hinzufügen einer Karte
         public class AddCardDto
         {
             public string Name { get; set; } = string.Empty;
-            public string Type { get; set; } = string.Empty; // 'spell' or 'monster'
+            public string Type { get; set; } = string.Empty; // 'spell' oder 'monster'
             public int Damage { get; set; }
             public string Element { get; set; } = string.Empty; // 'fire', 'water', 'normal'
         }
