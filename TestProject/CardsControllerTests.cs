@@ -84,7 +84,7 @@ namespace MonsterCardTradingGame.Tests
             // Assert
             Assert.Equal(201, addCardResponse.StatusCode);
             Assert.Equal("text/plain", addCardResponse.ContentType);
-            Assert.Equal("Card added successfully.", addCardResponse.Body);
+            Assert.Equal("Karte erfolgreich hinzugefügt.", addCardResponse.Body);
 
             // Optional: Überprüfen, ob die Karte tatsächlich in der Datenbank existiert
             var userCards = CardRepository.GetUserCards(_testUsername);
@@ -122,7 +122,7 @@ namespace MonsterCardTradingGame.Tests
             // Assert
             Assert.Equal(400, addCardResponse.StatusCode);
             Assert.Equal("text/plain", addCardResponse.ContentType);
-            Assert.Equal("Invalid card data.", addCardResponse.Body);
+            Assert.Equal("Ungültige Kartendaten.", addCardResponse.Body);
         }
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace MonsterCardTradingGame.Tests
             // Assert
             Assert.Equal(200, deleteCardResponse.StatusCode);
             Assert.Equal("text/plain", deleteCardResponse.ContentType);
-            Assert.Equal("Card removed successfully.", deleteCardResponse.Body);
+            Assert.Equal("Karte erfolgreich entfernt.", deleteCardResponse.Body);
 
             // Überprüfen, ob die Karte tatsächlich gelöscht wurde
             var updatedUserCards = CardRepository.GetUserCards(_testUsername);
@@ -200,7 +200,7 @@ namespace MonsterCardTradingGame.Tests
             // Assert
             Assert.Equal(404, deleteCardResponse.StatusCode);
             Assert.Equal("text/plain", deleteCardResponse.ContentType);
-            Assert.Equal("Card not found or does not belong to the user.", deleteCardResponse.Body);
+            Assert.Equal("Karte nicht gefunden oder gehört nicht zum Benutzer.", deleteCardResponse.Body);
         }
 
         /// <summary>

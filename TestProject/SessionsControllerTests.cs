@@ -165,10 +165,4 @@ namespace MonsterCardTradingGame.Tests
             DatabaseManager.ExecuteNonQuery(deleteSql, ("u", _testUsername));
         }
     }
-
-    // DTO für die Login-Antwort
-    public class LoginResponseDto
-    {
-        public string Token { get; set; } = string.Empty;
-    }
 }

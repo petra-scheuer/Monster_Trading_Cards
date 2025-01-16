@@ -1,16 +1,22 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=0f0fcb0e_002D17a6_002D4e3d_002Dad80_002Dd638b6beb84f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="UnitTest1 #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::640FE028-6B40-440C-AAD0-254B8C0FF9EB::net9.0::UnitTest1&lt;/TestId&gt;
-  &lt;/TestAncestor&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=0f0fcb0e_002D17a6_002D4e3d_002Dad80_002Dd638b6beb84f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="UnitTest1 #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;Or&gt;
+    &lt;ProjectFile&gt;640FE028-6B40-440C-AAD0-254B8C0FF9EB/f:CardsControllerTests.cs&lt;/ProjectFile&gt;
+    &lt;ProjectFile&gt;640FE028-6B40-440C-AAD0-254B8C0FF9EB/f:UserControllerTests.cs&lt;/ProjectFile&gt;
+    &lt;ProjectFile&gt;640FE028-6B40-440C-AAD0-254B8C0FF9EB/f:TradesControllerTests.cs&lt;/ProjectFile&gt;
+    &lt;ProjectFile&gt;640FE028-6B40-440C-AAD0-254B8C0FF9EB/f:SessionsControllerTests.cs&lt;/ProjectFile&gt;
+    &lt;ProjectFile&gt;640FE028-6B40-440C-AAD0-254B8C0FF9EB/f:PackagesControllerTests.cs&lt;/ProjectFile&gt;
+    &lt;ProjectFile&gt;640FE028-6B40-440C-AAD0-254B8C0FF9EB/f:BattlesControllerTests.cs&lt;/ProjectFile&gt;
+  &lt;/Or&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=39cf5c22_002D05f2_002D482d_002Da67b_002Ddf72dee3b36f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from UserControllerTests.cs" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=39cf5c22_002D05f2_002D482d_002Da67b_002Ddf72dee3b36f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from UserControllerTests.cs" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;Or&gt;
     &lt;ProjectFile&gt;F074B6FB-D23B-47C9-9CC8-06A2A8D1E08F/d:TestProject/f:UserControllerTests.cs&lt;/ProjectFile&gt;
     &lt;ProjectFile&gt;F074B6FB-D23B-47C9-9CC8-06A2A8D1E08F/d:TestProject/f:SessionsControllerTests.cs&lt;/ProjectFile&gt;
     &lt;ProjectFile&gt;F074B6FB-D23B-47C9-9CC8-06A2A8D1E08F/d:TestProject/f:CardsControllerTests.cs&lt;/ProjectFile&gt;
     &lt;ProjectFile&gt;F074B6FB-D23B-47C9-9CC8-06A2A8D1E08F/d:TestProject/f:PackagesControllerTests.cs&lt;/ProjectFile&gt;
     &lt;ProjectFile&gt;F074B6FB-D23B-47C9-9CC8-06A2A8D1E08F/d:TestProject/f:TradesControllerTests.cs&lt;/ProjectFile&gt;
+    &lt;Project Location="/Users/petrascheuer/Desktop/MonsterCardTradingGame/TestProject" Presentation="&amp;lt;TestProject&amp;gt;" /&gt;
   &lt;/Or&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d140868c_002D89c3_002D4e82_002Db2f7_002D7bbe7b5b89bc/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="UnitTest1" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;

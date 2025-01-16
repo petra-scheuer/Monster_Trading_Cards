@@ -9,6 +9,7 @@
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
         <ImplicitUsings>disable</ImplicitUsings>
         <GenerateProgramFile>false</GenerateProgramFile>
+        <OutputType>Library</OutputType>
     </PropertyGroup>
    
     <ItemGroup>
@@ -22,5 +23,11 @@
     <ItemGroup>
       <ProjectReference Include="..\MonsterCardTradingGame.csproj" />
     </ItemGroup>
+    <Target Name="ForceLibraryOutputType" BeforeTargets="CoreCompile">
+        <PropertyGroup>
+            <!-- Nur falls es irgendwie wieder auf exe gesetzt wurde -->
+            <OutputType>Library</OutputType>
+        </PropertyGroup>
+    </Target>
     
 </Project>
