@@ -197,6 +197,5 @@ namespace MonsterCardTradingGame.Controllers
             public int Damage { get; set; }
             public string Element { get; set; } = string.Empty; // 'fire', 'water', 'normal'
         }
-        
     }
 }

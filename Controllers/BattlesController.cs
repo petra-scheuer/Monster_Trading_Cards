@@ -370,7 +370,6 @@ namespace MonsterCardTradingGame.Controllers
 
         
         // HILFSFUNKTION: BENUTZERNAME AUS TOKEN ERHALTEN
-        
         private static string? GetUsernameByToken(string token)
         {
             return UserRepository.GetUsernameByToken(token);

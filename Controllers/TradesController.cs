@@ -40,9 +40,9 @@ namespace MonsterCardTradingGame.Controllers
             };
         }
 
-        /// <summary>
-        /// Überprüft die Authentifizierung und gibt den Benutzernamen zurück.
-        /// </summary>
+        
+        // Überprüft die Authentifizierung und gibt den Benutzernamen zurück.
+        
         private static bool IsAuthenticated(HttpRequest request, out string? username)
         {
             username = null;
@@ -57,9 +57,7 @@ namespace MonsterCardTradingGame.Controllers
             return username != null;
         }
 
-        /// <summary>
-        /// Erstellt ein neues Handelsangebot.
-        /// </summary>
+        //Erstellt ein neues Handelsangebot.
         private static HttpResponse CreateTrade(string username, HttpRequest request)
         {
             try
@@ -146,9 +144,7 @@ namespace MonsterCardTradingGame.Controllers
             }
         }
 
-        /// <summary>
-        /// Nimmt ein bestehendes Handelsangebot an.
-        /// </summary>
+        // Nimmt ein bestehendes Handelsangebot an.
         private static HttpResponse AcceptTrade(string username, HttpRequest request)
         {
             try
@@ -298,9 +294,7 @@ namespace MonsterCardTradingGame.Controllers
             }
         }
 
-        /// <summary>
-        /// Holt alle aktiven Handelsangebote.
-        /// </summary>
+        // Holt alle aktiven Handelsangebote.
         private static HttpResponse GetActiveTrades()
         {
             try

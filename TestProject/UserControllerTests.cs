@@ -15,7 +15,6 @@ namespace MonsterCardTradingGame.Tests
 
         public UsersControllerTests()
         {
-            // Optional: Initialisieren Sie eine separate Test-Datenbank oder setzen Sie Transaktionen ein
         }
 
         [Fact]

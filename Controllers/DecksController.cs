@@ -108,7 +108,7 @@ namespace MonsterCardTradingGame.Controllers
             }
         }
 
-        // Helper method to check authentication
+        // Hilfsmethode zum Checken ob man eingelogt ist.
         private static bool IsAuthenticated(HttpRequest request, out string? username)
         {
             username = null;
