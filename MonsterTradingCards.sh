@@ -1,423 +1,190 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-# --------------------------------------------------
+#
+# FeatureTestDynamic.sh - Beispiel-Skript für dynamische Tokens
 # Monster Trading Cards Game
-# --------------------------------------------------
-echo "CURL Testing for Monster Trading Cards Game"
-echo "Syntax: MonsterTradingCards.sh [pause]"
-echo "- pause: optional, if set, then script will pause after each block"
-echo .
+#
 
+echo "=== MTCG - cURL Integration Test (Dynamische Tokens) ==="
 
+# -------------------------------------
+# Prüfen, ob "pause" als Parameter übergeben wurde
 pauseFlag=0
 for arg in "$@"; do
-    if [ "$arg" == "pause" ]; then
-        pauseFlag=1
-        break
-    fi
+  if [ "$arg" == "pause" ]; then
+    pauseFlag=1
+    break
+  fi
 done
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+function pause() {
+  if [ $pauseFlag -eq 1 ]; then
+    read -p "Press Enter to continue..."
+  fi
+}
 
-# --------------------------------------------------
-echo "1) Create Users (Registration)"
-# Create User
-curl -i -X POST http://localhost:10001/users --header "Content-Type: application/json" -d "{\"Username\":\"kienboec\", \"Password\":\"daniel\"}"
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/users --header "Content-Type: application/json" -d "{\"Username\":\"altenhof\", \"Password\":\"markus\"}"
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/users --header "Content-Type: application/json" -d "{\"Username\":\"admin\",    \"Password\":\"istrator\"}"
-echo "Should return HTTP 201"
-echo .
+SERVER_URL="http://localhost:10001"
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+# -------------------------------------
+# 1) CREATE USERS
+echo
+echo "=== 1) Create Users (Register) ==="
+curl -i -X POST "$SERVER_URL/users" \
+     -H "Content-Type: application/json" \
+     -d '{"Username": "kienboec", "Password": "daniel"}'
+echo
+curl -i -X POST "$SERVER_URL/users" \
+     -H "Content-Type: application/json" \
+     -d '{"Username": "altenhof", "Password": "markus"}'
+echo
+curl -i -X POST "$SERVER_URL/users" \
+     -H "Content-Type: application/json" \
+     -d '{"Username": "admin", "Password": "istrator"}'
+echo
+echo "(Erwartet: 201, falls Benutzer noch nicht existierten)"
+pause
 
-echo "should fail:"
-curl -i -X POST http://localhost:10001/users --header "Content-Type: application/json" -d "{\"Username\":\"kienboec\", \"Password\":\"daniel\"}"
-echo "Should return HTTP 4xx - User already exists"
-echo .
-curl -i -X POST http://localhost:10001/users --header "Content-Type: application/json" -d "{\"Username\":\"kienboec\", \"Password\":\"different\"}"
-echo "Should return HTTP 4xx - User already exists"
-echo .
-echo .
+# -------------------------------------
+# 2) LOGIN USERS & PARSE TOKENS
+echo
+echo "=== 2) Login Users (Sessions) ==="
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+# --- Kienboec ---
+LOGIN_RESPONSE_KIENBOEC=$(curl -s -X POST "$SERVER_URL/sessions" \
+  -H "Content-Type: application/json" \
+  -d '{"Username": "kienboec", "Password": "daniel"}')
 
-# --------------------------------------------------
-echo "2) Login Users"
-curl -i -X POST http://localhost:10001/sessions --header "Content-Type: application/json" -d "{\"Username\":\"kienboec\", \"Password\":\"daniel\"}"
-echo "should return HTTP 200 with generated token for the user, here: 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo .
-curl -i -X POST http://localhost:10001/sessions --header "Content-Type: application/json" -d "{\"Username\":\"altenhof\", \"Password\":\"markus\"}"
-echo "should return HTTP 200 with generated token for the user, here: 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo .
-curl -i -X POST http://localhost:10001/sessions --header "Content-Type: application/json" -d "{\"Username\":\"admin\",    \"Password\":\"istrator\"}"
-echo "should return HTTP 200 with generated token for the user, here: admin-mtcgToken"
-echo .
+KIENBOEC_TOKEN=$(echo "$LOGIN_RESPONSE_KIENBOEC" | jq -r '.Token')
+echo "Login kienboec => Token: $KIENBOEC_TOKEN"
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+# --- Altenhof ---
+LOGIN_RESPONSE_ALTENHOF=$(curl -s -X POST "$SERVER_URL/sessions" \
+  -H "Content-Type: application/json" \
+  -d '{"Username": "altenhof", "Password": "markus"}')
 
-echo "should fail:"
-curl -i -X POST http://localhost:10001/sessions --header "Content-Type: application/json" -d "{\"Username\":\"kienboec\", \"Password\":\"different\"}"
-echo "Should return HTTP 4xx - Login failed"
-echo .
-echo .
+ALTENHOF_TOKEN=$(echo "$LOGIN_RESPONSE_ALTENHOF" | jq -r '.Token')
+echo "Login altenhof => Token: $ALTENHOF_TOKEN"
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+# --- Admin ---
+LOGIN_RESPONSE_ADMIN=$(curl -s -X POST "$SERVER_URL/sessions" \
+  -H "Content-Type: application/json" \
+  -d '{"Username": "admin", "Password": "istrator"}')
 
-# --------------------------------------------------
-echo "3) create packages (done by admin)"
-curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Id\":\"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Id\":\"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Name\":\"Ork\", \"Damage\": 45.0}, {\"Id\":\"dfdd758f-649c-40f9-ba3a-8657f4b3439f\", \"Name\":\"FireSpell\",    \"Damage\": 25.0}]"
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"644808c2-f87a-4600-b313-122b02322fd5\", \"Name\":\"WaterGoblin\", \"Damage\":  9.0}, {\"Id\":\"4a2757d6-b1c3-47ac-b9a3-91deab093531\", \"Name\":\"Dragon\", \"Damage\": 55.0}, {\"Id\":\"91a6471b-1426-43f6-ad65-6fc473e16f9f\", \"Name\":\"WaterSpell\", \"Damage\": 21.0}, {\"Id\":\"4ec8b269-0dfa-4f97-809a-2c63fe2a0025\", \"Name\":\"Ork\", \"Damage\": 55.0}, {\"Id\":\"f8043c23-1534-4487-b66b-238e0c3c39b5\", \"Name\":\"WaterSpell\",   \"Damage\": 23.0}]"
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"b017ee50-1c14-44e2-bfd6-2c0c5653a37c\", \"Name\":\"WaterGoblin\", \"Damage\": 11.0}, {\"Id\":\"d04b736a-e874-4137-b191-638e0ff3b4e7\", \"Name\":\"Dragon\", \"Damage\": 70.0}, {\"Id\":\"88221cfe-1f84-41b9-8152-8e36c6a354de\", \"Name\":\"WaterSpell\", \"Damage\": 22.0}, {\"Id\":\"1d3f175b-c067-4359-989d-96562bfa382c\", \"Name\":\"Ork\", \"Damage\": 40.0}, {\"Id\":\"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\", \"Name\":\"RegularSpell\", \"Damage\": 28.0}]"
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"ed1dc1bc-f0aa-4a0c-8d43-1402189b33c8\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"65ff5f23-1e70-4b79-b3bd-f6eb679dd3b5\", \"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Id\":\"55ef46c4-016c-4168-bc43-6b9b1e86414f\", \"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Id\":\"f3fad0f2-a1af-45df-b80d-2e48825773d9\", \"Name\":\"Ork\", \"Damage\": 45.0}, {\"Id\":\"8c20639d-6400-4534-bd0f-ae563f11f57a\", \"Name\":\"WaterSpell\",   \"Damage\": 25.0}]"
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"d7d0cb94-2cbf-4f97-8ccf-9933dc5354b8\", \"Name\":\"WaterGoblin\", \"Damage\":  9.0}, {\"Id\":\"44c82fbc-ef6d-44ab-8c7a-9fb19a0e7c6e\", \"Name\":\"Dragon\", \"Damage\": 55.0}, {\"Id\":\"2c98cd06-518b-464c-b911-8d787216cddd\", \"Name\":\"WaterSpell\", \"Damage\": 21.0}, {\"Id\":\"951e886a-0fbf-425d-8df5-af2ee4830d85\", \"Name\":\"Ork\", \"Damage\": 55.0}, {\"Id\":\"dcd93250-25a7-4dca-85da-cad2789f7198\", \"Name\":\"FireSpell\",    \"Damage\": 23.0}]"
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"b2237eca-0271-43bd-87f6-b22f70d42ca4\", \"Name\":\"WaterGoblin\", \"Damage\": 11.0}, {\"Id\":\"9e8238a4-8a7a-487f-9f7d-a8c97899eb48\", \"Name\":\"Dragon\", \"Damage\": 70.0}, {\"Id\":\"d60e23cf-2238-4d49-844f-c7589ee5342e\", \"Name\":\"WaterSpell\", \"Damage\": 22.0}, {\"Id\":\"fc305a7a-36f7-4d30-ad27-462ca0445649\", \"Name\":\"Ork\", \"Damage\": 40.0}, {\"Id\":\"84d276ee-21ec-4171-a509-c1b88162831c\", \"Name\":\"RegularSpell\", \"Damage\": 28.0}]"
-echo "Should return HTTP 201"
-echo .
-echo .
+ADMIN_TOKEN=$(echo "$LOGIN_RESPONSE_ADMIN" | jq -r '.Token')
+echo "Login admin => Token: $ADMIN_TOKEN"
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+echo
+echo "(Erwartet: Gültige Tokens als GUID o.Ä.)"
+pause
 
-# --------------------------------------------------
-echo "4) acquire packages kienboec"
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d ""
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d ""
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d ""
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d ""
-echo "Should return HTTP 201"
-echo .
-echo "should fail (no money):"
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d ""
-echo "Should return HTTP 4xx - Not enough money"
-echo .
-echo .
+# -------------------------------------
+# 3) USER Kienboec kauft ein Package
+echo
+echo "=== 3) Buy a Package (Kienboec) ==="
+curl -i -X POST "$SERVER_URL/packages" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d ''
+echo
+echo "(Erwartet: 200 oder 201, falls Kauf erfolgreich)"
+pause
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+# -------------------------------------
+# 4) LIST CARDS (Kienboec)
+echo
+echo "=== 4) List Own Cards (Kienboec) ==="
+curl -i -X GET "$SERVER_URL/cards" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN"
+echo
+echo "(Erwartet: 200 und JSON-Array mit Kienboecs Karten)"
+pause
 
-# --------------------------------------------------
-echo "5) acquire packages altenhof"
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d ""
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d ""
-echo "Should return HTTP 201"
-echo .
-echo "should fail (no package):"
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d ""
-echo "Should return HTTP 4xx - No packages available"
-echo .
-echo .
+# -------------------------------------
+# 5) CONFIGURE DECK
+echo
+echo "=== 5) Configure Deck (Kienboec) ==="
+# Beispiel mit 4 int-IDs oder GUIDs. Passe an deine IDs an!
+curl -i -X POST "$SERVER_URL/decks" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"CardIds": [704, 705, 706, 707]}'
+echo
+echo "(Erwartet: 200 OK, Deck gespeichert)"
+pause
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+# -------------------------------------
+# 6) SHOW DECK
+echo
+echo "=== 6) Show Deck (Kienboec) ==="
+curl -i -X GET "$SERVER_URL/decks" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN"
+echo
+pause
 
-# --------------------------------------------------
-echo "6) add new packages"
-curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"67f9048f-99b8-4ae4-b866-d8008d00c53d\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"aa9999a0-734c-49c6-8f4a-651864b14e62\", \"Name\":\"RegularSpell\", \"Damage\": 50.0}, {\"Id\":\"d6e9c720-9b5a-40c7-a6b2-bc34752e3463\", \"Name\":\"Knight\", \"Damage\": 20.0}, {\"Id\":\"02a9c76e-b17d-427f-9240-2dd49b0d3bfd\", \"Name\":\"RegularSpell\", \"Damage\": 45.0}, {\"Id\":\"2508bf5c-20d7-43b4-8c77-bc677decadef\", \"Name\":\"FireElf\", \"Damage\": 25.0}]"
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"70962948-2bf7-44a9-9ded-8c68eeac7793\", \"Name\":\"WaterGoblin\", \"Damage\":  9.0}, {\"Id\":\"74635fae-8ad3-4295-9139-320ab89c2844\", \"Name\":\"FireSpell\", \"Damage\": 55.0}, {\"Id\":\"ce6bcaee-47e1-4011-a49e-5a4d7d4245f3\", \"Name\":\"Knight\", \"Damage\": 21.0}, {\"Id\":\"a6fde738-c65a-4b10-b400-6fef0fdb28ba\", \"Name\":\"FireSpell\", \"Damage\": 55.0}, {\"Id\":\"a1618f1e-4f4c-4e09-9647-87e16f1edd2d\", \"Name\":\"FireElf\", \"Damage\": 23.0}]"
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"2272ba48-6662-404d-a9a1-41a9bed316d9\", \"Name\":\"WaterGoblin\", \"Damage\": 11.0}, {\"Id\":\"3871d45b-b630-4a0d-8bc6-a5fc56b6a043\", \"Name\":\"Dragon\", \"Damage\": 70.0}, {\"Id\":\"166c1fd5-4dcb-41a8-91cb-f45dcd57cef3\", \"Name\":\"Knight\", \"Damage\": 22.0}, {\"Id\":\"237dbaef-49e3-4c23-b64b-abf5c087b276\", \"Name\":\"WaterSpell\", \"Damage\": 40.0}, {\"Id\":\"27051a20-8580-43ff-a473-e986b52f297a\", \"Name\":\"FireElf\", \"Damage\": 28.0}]"
-echo "Should return HTTP 201"
-echo .
-echo .
+# -------------------------------------
+# 7) START A BATTLE
+echo
+echo "=== 7) Start a Battle (Kienboec) ==="
+curl -i -X POST "$SERVER_URL/battles" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"Username": "kienboec"}'
+echo
+echo "(Erwartet: 201 Created mit Battle-Infos)"
+pause
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+# -------------------------------------
+# 8) SCOREBOARD
+echo
+echo "=== 8) Show Scoreboard ==="
+curl -i -X GET "$SERVER_URL/scoreboard" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN"
+echo
+pause
 
-# --------------------------------------------------
-echo "7) acquire newly created packages altenhof"
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d ""
-echo "Should return HTTP 201"
-echo .
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d ""
-echo "Should return HTTP 201"
-echo .
-echo "should fail (no money):"
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d ""
-echo "Should return HTTP 4xx - Not enough money"
-echo .
-echo .
+# -------------------------------------
+# 9) CLAIM POWERUP
+echo
+echo "=== 9) Claim a PowerUp (Kienboec) ==="
+curl -i -X POST "$SERVER_URL/powerups/claim" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN"
+echo
+pause
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+# -------------------------------------
+# 10) LIST POWERUPS
+echo
+echo "=== 10) List PowerUps (Kienboec) ==="
+curl -i -X GET "$SERVER_URL/powerups" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN"
+echo
+pause
 
-# --------------------------------------------------
-echo "8) show all acquired cards kienboec"
-curl -i -X GET http://localhost:10001/cards --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and a list of all cards"
-echo "should fail (no token):"
-curl -i -X GET http://localhost:10001/cards
-echo "Should return HTTP 4xx - Unauthorized"
-echo .
-echo .
+# -------------------------------------
+# 11) CREATE TRADE
+echo
+echo "=== 11) Create Trade (Kienboec) ==="
+curl -i -X POST "$SERVER_URL/trades" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{
+          "OfferedCardId": 704,
+          "RequirementType": "spell",
+          "RequirementElement": "fire",
+          "RequirementMinDamage": 30
+        }'
+echo
+pause
 
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
+# -------------------------------------
+# 12) GET ACTIVE TRADES
+echo
+echo "=== 12) List all Trades (Kienboec) ==="
+curl -i -X GET "$SERVER_URL/trades" \
+     -H "Authorization: Bearer $KIENBOEC_TOKEN"
+echo
+pause
 
-# --------------------------------------------------
-echo "9) show all acquired cards altenhof"
-curl -i -X GET http://localhost:10001/cards --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and a list of all cards"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "10) show unconfigured deck"
-curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and a empty-list"
-echo .
-curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and a empty-list"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "11) configure deck"
-curl -i -X PUT http://localhost:10001/deck --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d "[\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]"
-echo "Should return HTTP 2xx"
-echo .
-curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and a list of all cards"
-echo .
-curl -i -X PUT http://localhost:10001/deck --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d "[\"aa9999a0-734c-49c6-8f4a-651864b14e62\", \"d6e9c720-9b5a-40c7-a6b2-bc34752e3463\", \"d60e23cf-2238-4d49-844f-c7589ee5342e\", \"02a9c76e-b17d-427f-9240-2dd49b0d3bfd\"]"
-echo "Should return HTTP 2xx"
-echo .
-curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and a list of all cards"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-echo "should fail and show original from before:"
-curl -i -X PUT http://localhost:10001/deck --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d "[\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]"
-echo "Should return HTTP 4xx"
-echo .
-curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and a list of all cards"
-echo .
-echo .
-echo should fail ... only 3 cards set
-curl -i -X PUT http://localhost:10001/deck --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d "[\"aa9999a0-734c-49c6-8f4a-651864b14e62\", \"d6e9c720-9b5a-40c7-a6b2-bc34752e3463\", \"d60e23cf-2238-4d49-844f-c7589ee5342e\"]"
-echo "Should return HTTP 4xx - Bad request"
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "12) show configured deck"
-curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and a list of all cards"
-echo .
-curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and a list of all cards"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-REM --------------------------------------------------
-echo "13) show configured deck different representation"
-echo kienboec
-curl -i -X GET "http://localhost:10001/deck?format=plain" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and a list of all cards"
-echo .
-echo .
-echo altenhof
-curl -i -X GET "http://localhost:10001/deck?format=plain" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and a list of all cards"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "14) edit user data"
-echo .
-curl -i -X GET http://localhost:10001/users/kienboec --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and current user data"
-echo .
-curl -i -X GET http://localhost:10001/users/altenhof --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and current user data"
-echo .
-curl -i -X PUT http://localhost:10001/users/kienboec --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d "{\"Name\": \"Kienboeck\",  \"Bio\": \"me playin...\", \"Image\": \":-)\"}"
-echo "Should return HTTP 2xx"
-echo .
-curl -i -X PUT http://localhost:10001/users/altenhof --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d "{\"Name\": \"Altenhofer\", \"Bio\": \"me codin...\",  \"Image\": \":-D\"}"
-echo "Should return HTTP 2xx"
-echo .
-curl -i -X GET http://localhost:10001/users/kienboec --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and new user data"
-echo .
-curl -i -X GET http://localhost:10001/users/altenhof --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and new user data"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-echo "should fail:"
-curl -i -X GET http://localhost:10001/users/altenhof --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 4xx"
-echo .
-curl -i -X GET http://localhost:10001/users/kienboec --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 4xx"
-echo .
-curl -i -X PUT http://localhost:10001/users/kienboec --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d "{\"Name\": \"Hoax\",  \"Bio\": \"me playin...\", \"Image\": \":-)\"}"
-echo "Should return HTTP 4xx"
-echo .
-curl -i -X PUT http://localhost:10001/users/altenhof --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d "{\"Name\": \"Hoax\", \"Bio\": \"me codin...\",  \"Image\": \":-D\"}"
-echo "Should return HTTP 4xx"
-echo .
-curl -i -X GET http://localhost:10001/users/someGuy  --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 4xx"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "15) stats"
-curl -i -X GET http://localhost:10001/stats --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and user stats"
-echo .
-curl -i -X GET http://localhost:10001/stats --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and user stats"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "16) scoreboard"
-curl -i -X GET http://localhost:10001/scoreboard --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and the scoreboard"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "17) battle"
-curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" &
-curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" &
-wait
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "18) Stats"
-echo "kienboec"
-curl -i -X GET http://localhost:10001/stats --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and changed user stats"
-echo .
-echo altenhof
-curl -i -X GET http://localhost:10001/stats --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and changed user stats"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "19) scoreboard"
-curl -i -X GET http://localhost:10001/scoreboard --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and the changed scoreboard"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "20) trade"
-echo "check trading deals"
-curl -i -X GET http://localhost:10001/tradings --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and an empty list"
-echo .
-echo create trading deal
-curl -i -X POST http://localhost:10001/tradings --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d "{\"Id\": \"6cd85277-4590-49d4-b0cf-ba0a921faad0\", \"CardToTrade\": \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Type\": \"monster\", \"MinimumDamage\": 15}"
-echo "Should return HTTP 201"
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-echo "check trading deals"
-curl -i -X GET http://localhost:10001/tradings --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 - and the trading deal"
-echo .
-curl -i -X GET http://localhost:10001/tradings --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 - and the trading deal"
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-echo "delete trading deals"
-curl -i -X DELETE http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 2xx"
-echo .
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-# --------------------------------------------------
-echo "21) check trading deals"
-curl -i -X GET http://localhost:10001/tradings  --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 ..."
-echo .
-curl -i -X POST http://localhost:10001/tradings --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d "{\"Id\": \"6cd85277-4590-49d4-b0cf-ba0a921faad0\", \"CardToTrade\": \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Type\": \"monster\", \"MinimumDamage\": 15}"
-echo "Should return HTTP 201"
-echo check trading deals
-curl -i -X GET http://localhost:10001/tradings  --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 ..."
-echo .
-curl -i -X GET http://localhost:10001/tradings  --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 ..."
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-echo "try to trade with yourself (should fail)"
-curl -i -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944" -d "\"4ec8b269-0dfa-4f97-809a-2c63fe2a0025\""
-echo "Should return HTTP 4xx"
-echo .
-
-if [ $pauseFlag -eq 1 ]; then read -p "Press enter to continue..."; fi
-
-echo "try to trade"
-echo .
-curl -i -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122" -d "\"951e886a-0fbf-425d-8df5-af2ee4830d85\""
-echo "Should return HTTP 201 ..."
-echo .
-curl -i -X GET http://localhost:10001/tradings --header "Authorization: Bearer 1510de16-5f2b-47d4-b04c-917f1c122944"
-echo "Should return HTTP 200 ..."
-echo .
-curl -i -X GET http://localhost:10001/tradings --header "Authorization: Bearer 4456c76b-0a10-418e-ae49-c3ea765d9122"
-echo "Should return HTTP 200 ..."
-echo .
-
-# --------------------------------------------------
-echo "end..."
-
+echo
+echo "=== Done. ==="
 
