@@ -62,7 +62,7 @@ namespace MonsterCardTradingGame.Controllers
         {
             try
             {
-                var tradeDto = JsonSerializer.Deserialize<CreateTradeDto>(request.Body);
+                var tradeDto = JsonSerializer.Deserialize<CreateTradeDto>(request.Body); //JSON objekt erstellen
                 if (tradeDto == null || tradeDto.OfferedCardId <= 0 ||
                     string.IsNullOrWhiteSpace(tradeDto.RequirementType))
                 {

@@ -25,8 +25,8 @@ namespace MonsterCardTradingGame
             // Server starten
             server.Start();
 
-            // Eine kleine Schleife, damit die Main nicht gleich beendet wird:
-            // Drücke 'q' um das Programm zu beenden (Server.Stop() zu rufen).
+            
+            // Drücke 'q' um das Programm zu beendenq.
             Console.WriteLine("Press 'q' to stop the server...");
             while (true)
             {

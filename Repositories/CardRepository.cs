@@ -54,11 +54,9 @@ namespace MonsterCardTradingGame.Repositories
                 };
             }, ("owner_username", username));
         }
-
-        // Entfernt eine Karte, sofern sie dem Benutzer gehört
         public static bool RemoveCard(string username, int cardId)
         {
-            // Check ownership
+            // Überprüfung ob diese karte den User gehört
             const string sqlCheck = @"SELECT COUNT(*) FROM cards WHERE id = @id AND owner_username = @owner_username";
             object? result = DatabaseManager.ExecuteScalar(sqlCheck, ("id", cardId), ("owner_username", username));
             long count = result != null ? Convert.ToInt64(result) : 0;
@@ -67,13 +65,13 @@ namespace MonsterCardTradingGame.Repositories
                 return false;
             }
 
-            // Delete
+            // Wenn ja, dann löschen.
             const string sqlDelete = @"DELETE FROM cards WHERE id = @id";
             DatabaseManager.ExecuteNonQuery(sqlDelete, ("id", cardId));
             return true;
         }
 
-        // Holt alle Karten (falls du das brauchst)
+        // Holt alle Karten
         public static List<Card> GetAllCards()
         {
             const string sql = @"SELECT id, name, type, damage, element FROM cards";
@@ -181,7 +179,7 @@ namespace MonsterCardTradingGame.Repositories
         }
 
         /// <summary>
-        /// NEU: Überträgt die Besitzrechte einer Karte in der Datenbank.
+        /// Überträgt die Besitzrechte einer Karte in der Datenbank.
         /// </summary>
         public static bool TransferCardOwnership(int cardId, string newOwnerUsername)
         {

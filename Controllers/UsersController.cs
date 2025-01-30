@@ -18,7 +18,7 @@ namespace MonsterCardTradingGame.Controllers
             {
                 // Überprüfen der Authentifizierung
                 var authHeader = request.Authorization;
-                if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
+                if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer ")) // check ob es ein leerer Header ist und ob er eh mit Bearber begibbt 
                 {
                     return new HttpResponse
                     {
@@ -155,7 +155,7 @@ namespace MonsterCardTradingGame.Controllers
                     };
                 }
 
-                var updateDto = JsonSerializer.Deserialize<UpdateProfileDto>(request.Body);
+                var updateDto = JsonSerializer.Deserialize<UpdateProfileDto>(request.Body); //deserialisiert (wandelt um) einen JSON-String in ein C#-Objekt
                 if (updateDto == null || string.IsNullOrWhiteSpace(updateDto.NewPassword))
                 {
                     return new HttpResponse
@@ -217,6 +217,6 @@ namespace MonsterCardTradingGame.Controllers
     public class UpdateProfileDto
     {
         public string NewPassword { get; set; } = string.Empty;
-        // Weitere Felder können hier hinzugefügt werden
+        
     }
 }

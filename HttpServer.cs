@@ -53,15 +53,16 @@ namespace MonsterCardTradingGame
         private async Task HandleClientAsync(TcpClient client)
         {
             using (client)
+                //using damit sowohl client als auch stream nach Abschluss freigegeben wird
             using (var stream = client.GetStream())
             {
                 try
                 {
-                    // Request parsen
+                    
                     var request = await HttpRequestParser.ParseFromStreamAsync(stream);
                     Console.WriteLine($"[HttpServer] Request => Method: {request.Method}, Path: {request.Path}");
 
-                    // Router aufrufen
+                    // request an den router übergeben
                     var response = Router.Route(request);
 
                     // Antwort in den Stream schreiben
@@ -72,23 +73,19 @@ namespace MonsterCardTradingGame
                 catch (Exception ex)
                 {
                     Console.WriteLine($"[HttpServer] Error parsing HTTP: {ex.Message}");
-
-                    // Fehler-Antwort: Hier sehr minimal gehalten
+                    
                     using var writer = new StreamWriter(stream)
                     {
                         NewLine = "\r\n"  // erzwingt CRLF bei WriteLine
                     };
 
-                    // Statuszeile
+                    // Printed die Resonse
                     await writer.WriteLineAsync("HTTP/1.1 400 Bad Request");
-                    // Header
                     await writer.WriteLineAsync("Content-Type: text/plain");
-                    // Ende der Header
                     await writer.WriteLineAsync();
-
-                    // Body
                     await writer.WriteLineAsync($"Error: {ex.Message}");
-
+                    
+                    //clears all Buffers for this stream
                     await writer.FlushAsync();
                 }
             }

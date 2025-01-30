@@ -43,13 +43,12 @@ namespace MonsterCardTradingGame
         }
 
         /// <summary>
-        /// Hier könntest du deine Tabellen anlegen. 
-        /// Du kannst diese Methode z.B. beim Programmstart einmal aufrufen.
+        /// Legt die tabellen an 
         /// </summary>
         ///
         public static void SetupTables()
 {
-    // Bestehende Tabellen erstellen
+    
     const string createUsersTable = @"
         CREATE TABLE IF NOT EXISTS users (
             username VARCHAR(50) PRIMARY KEY,
@@ -159,12 +158,10 @@ namespace MonsterCardTradingGame
     // Seed-Karten hinzufügen
     SeedCards();
 }
-
-
-
+        
         /// <summary>
-        /// Führt ein beliebiges SQL-Statement aus, das 
-        /// keine Rückgabe (kein ResultSet) erfordert (z.B. CREATE TABLE, INSERT, UPDATE, DELETE).
+        /// Führt ein das übergebene SQL-Statement aus, das 
+        /// keine Rückgabe erfordert (z.B. CREATE TABLE, INSERT, UPDATE, DELETE).
         /// </summary>
         public static void ExecuteNonQuery(string sql)
         {
@@ -175,8 +172,7 @@ namespace MonsterCardTradingGame
         }
 
         /// <summary>
-        /// Variante: führt ein SQL mit Parametern aus (zur Vorbeugung von SQL-Injection).
-        /// Beispiel-Aufruf: ExecuteNonQuery("INSERT INTO user (username) VALUES (@u)", ("u", "Alice"));
+        /// Führt das übergebene SQL Statment mit Parametern aus ( Vorbeugung von SQL-Injection).
         /// </summary>
         public static void ExecuteNonQuery(string sql, params (string paramName, object paramValue)[] parameters)
         {
@@ -193,8 +189,8 @@ namespace MonsterCardTradingGame
         }
 
         /// <summary>
-        /// Führt ein SQL-Statement aus, das genau einen Wert zurückliefert
-        /// (z.B. SELECT count(*) FROM users) und gibt ihn als object zurück.
+        /// Führt ein übergebenes SQL-Statement aus, das genau einen Wert zurückliefert
+        /// (z.B. SELECT count(*) FROM users) und gibt den wert als object zurück.
         /// </summary>
         public static object? ExecuteScalar(string sql, params (string paramName, object paramValue)[] parameters)
         {
@@ -211,7 +207,7 @@ namespace MonsterCardTradingGame
         }
 
         /// <summary>
-        /// Beispielmethode zum Auslesen mehrerer Zeilen.
+        /// Auslesen mehrerer Zeilen.
         /// Du übergibst einen Mapper, der aus dem IDataReader das gewünschte Objekt baut.
         /// </summary>
         public static List<T> ExecuteReader<T>(
@@ -241,7 +237,7 @@ namespace MonsterCardTradingGame
         }
         public static void SeedCards()
         {
-            // Beispielkarten
+            // Beispielkarten werden erstellt
             var cards = new List<Card>
             {
                 new SpellCard { Name = "Fireball", Type = "spell", Damage = 50, Element = "fire" },
@@ -251,7 +247,6 @@ namespace MonsterCardTradingGame
                 new MonsterCard { Name = "WaterGoblin", Type = "monster", Damage = 40, Element = "water" },
                 new MonsterCard { Name = "FireDragon", Type = "monster", Damage = 80, Element = "fire" },
                 new MonsterCard { Name = "NormalOrc", Type = "monster", Damage = 35, Element = "normal" },
-                // Füge weitere Karten nach Bedarf hinzu
             };
 
             foreach (var card in cards)

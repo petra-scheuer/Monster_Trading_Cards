@@ -4,4 +4,4 @@ Curl Skript auslösen lassen: chmod +x MonsterTradingCards.sh
 
 dotnet run
 dotnet build
-dotnet clean
+dotnet cleanq

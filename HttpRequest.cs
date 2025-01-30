@@ -1,6 +1,7 @@
 // HttpRequest.cs
 namespace MonsterCardTradingGame
 {
+    //Repräsentiert Anfragen, stellt das Gründgerüst für die HTTP Anfrage
     public class HttpRequest
     {
         public string Method { get; set; } = string.Empty;         // z.B. "GET"

@@ -24,7 +24,7 @@ namespace MonsterCardTradingGame.Logic
             return battle;
         }
 
-        // Optionales Beispiel für Einzelrunde (falls du das noch verwendest):
+        // Optionales Beispiel für Einzelrunde:
         public Battle PerformBattleTurn(Guid battleId)
         {
             throw new NotImplementedException("Beispiel-Runden-Feature, siehe PerformFullBattle für komplette Logik.");
@@ -105,13 +105,14 @@ namespace MonsterCardTradingGame.Logic
                     $"Runde {roundCount + 1}: {battle.PlayerUsername}'s {playerCard.Name}({playerDamage}) " +
                     $"vs {battle.OpponentUsername}'s {opponentCard.Name}({opponentDamage}) -> ";
 
-                // 4) Gewinner der Runde ermitteln + Karte übertragen (in-memory + DB)
+                // 4) Gewinner der Runde ermitteln + Karte übertragen
                 if (playerDamage > opponentDamage)
                 {
+                    //in Memory
                     battle.OpponentCardIds.Remove(oppCardId);
                     battle.PlayerCardIds.Add(oppCardId);
 
-                    // NEU: auch in der DB
+                    // in DB
                     CardRepository.TransferCardOwnership(oppCardId, battle.PlayerUsername);
 
                     roundLog += $"Spieler {battle.PlayerUsername} gewinnt. Karte {opponentCard.Name} wechselt den Besitzer.";
@@ -120,8 +121,7 @@ namespace MonsterCardTradingGame.Logic
                 {
                     battle.PlayerCardIds.Remove(playerCardId);
                     battle.OpponentCardIds.Add(playerCardId);
-
-                    // NEU: DB-Update
+                    
                     CardRepository.TransferCardOwnership(playerCardId, battle.OpponentUsername);
 
                     roundLog += $"Gegner {battle.OpponentUsername} gewinnt. Karte {playerCard.Name} wechselt den Besitzer.";
@@ -173,7 +173,7 @@ namespace MonsterCardTradingGame.Logic
             // Knight vs WaterSpell => Sofort-KO
             if (IsKnight(defender) && IsSpell(attacker) && attacker.Element.ToLower() == "water")
             {
-                return 999; // Beliebig hoch
+                return 9999; // Beliebig hoch
             }
 
             // Kraken immun gegen Spells
@@ -194,7 +194,7 @@ namespace MonsterCardTradingGame.Logic
             // Nur wenn mind. eine Spell-Karte
             if (IsSpell(attacker) || IsSpell(defender))
             {
-                // Element-Faktor double/half
+                // Element-Faktor gut = *2, schelcht = *0.5
                 double factor = GetElementFactor(attacker.Element.ToLower(), defender.Element.ToLower());
                 baseDamage = (int)(baseDamage * factor);
             }
@@ -223,7 +223,7 @@ namespace MonsterCardTradingGame.Logic
             UserRepository.UpdateELO(loser, -5);
         }
 
-        // Hilfsfunktionen für Namenschecks (vereinfachte Version)
+        // Hilfsfunktionen für Namens Checks
         private bool IsSpell(Card c) => c.Type.Equals("spell", StringComparison.OrdinalIgnoreCase);
         private bool IsGoblin(Card c) => c.Name.ToLower().Contains("goblin");
         private bool IsDragon(Card c) => c.Name.ToLower().Contains("dragon");

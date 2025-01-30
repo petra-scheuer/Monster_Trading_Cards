@@ -31,7 +31,6 @@ namespace MonsterCardTradingGame.Controllers
             {
                 return DeleteCard(username!, request);
             }
-            // Weitere Endpunkte (z.B. Karte aktualisieren) können hier hinzugefügt werden
 
             return new HttpResponse
             {

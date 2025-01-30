@@ -10,6 +10,10 @@ namespace MonsterCardTradingGame
         public string ContentType { get; set; } = "text/plain";
         public string Body { get; set; } = "";
 
+        /// <summary>
+        ///Erstellt eine HTTP Antwort als Byte Array
+        /// </summary>
+        /// <returns></returns>
         public byte[] GetBytes()
         {
             string statusText = GetStatusText(StatusCode);
@@ -22,6 +26,11 @@ namespace MonsterCardTradingGame
             return Encoding.UTF8.GetBytes(response);
         }
 
+        /// <summary>
+        /// Ermittelt den Text der dem HTTP Statuscode entspricht
+        /// </summary>
+        /// <param name="statusCode"></param>
+        /// <returns>Bedeutung des Status Code als String</returns>
         private string GetStatusText(int statusCode)
         {
             return statusCode switch

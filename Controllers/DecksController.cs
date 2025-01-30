@@ -41,6 +41,7 @@ namespace MonsterCardTradingGame.Controllers
         {
             try
             {
+                //C# Objekt aus dem JSON erzeugen
                 var deckDto = JsonSerializer.Deserialize<CreateDeckDto>(request.Body);
                 if (deckDto == null || deckDto.CardIds == null || deckDto.CardIds.Count != 4)
                 {
@@ -87,7 +88,7 @@ namespace MonsterCardTradingGame.Controllers
                         Body = "Deck nicht gefunden."
                     };
                 }
-
+                //JSON String von diesen Deck
                 var responseBody = JsonSerializer.Serialize(deck);
 
                 return new HttpResponse

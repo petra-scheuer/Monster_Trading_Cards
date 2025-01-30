@@ -8,6 +8,11 @@ namespace MonsterCardTradingGame
     // Router.cs
     public static class Router
     {
+        /// <summary>
+        /// Bestimmt basierend auf  request.Path welcher Controller zuständig ist 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns>gibt 404 zurück wenn kein passender pfad gefunden wird</returns>
         public static HttpResponse Route(HttpRequest request)
         {
             if (request.Path.StartsWith("/users"))
@@ -47,7 +52,6 @@ namespace MonsterCardTradingGame
                 return PowerUpsController.Handle(request);
             }
 
-            // Weitere Controller können hier hinzugefügt werden
             else
             {
                 return new HttpResponse
